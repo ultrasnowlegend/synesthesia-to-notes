@@ -6,3 +6,4 @@ dist-app/
 vzorky/
 *.mp4
 *.raw
+dist-electron/

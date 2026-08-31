@@ -9,6 +9,16 @@ export interface NastaveniNotace {
   autor?: string;
   /** MIDI cislo, pod kterym noty bez urcene ruky padnou do basoveho klice. */
   delicBod?: number;
+  /**
+   * Nejdelsi mezera v dobach, kterou misto pomlky vyplni prodlouzena nota.
+   * Nula pomlky zachova.
+   */
+  legato?: number;
+  /**
+   * O kolik pultonu smi nota prekrocit delici bod, nez ji presuneme do druhe
+   * osnovy. Bez toho konci hluboke tony prave ruky na peti pomocnych linkach.
+   */
+  tolerancePasma?: number;
 }
 
 interface HodnotaNoty {
@@ -82,8 +92,12 @@ interface Polozka {
  * Prevede noty jedne osnovy na souvislou radu akordu a pomlk bez prekryvu.
  * Vice hlasu v jedne osnove zamerne neresime: pro precteni improvizace je
  * jednohlasy zapis s akordy citelnejsi nez automaticky rozdelene hlasy.
+ *
+ * Kratke mezery mezi tony se vyplni prodlouzenim predchoziho tonu. Merena
+ * delka tonu konci tam, kde zhasne pruh, takze doslovny prepis by mezi kazde
+ * dva tony vlozil sestnactinovou pomlku a zapis by se stal necitelnym.
  */
-function osnovaNaPolozky(noty: readonly NotaTik[], konec: number): Polozka[] {
+function osnovaNaPolozky(noty: readonly NotaTik[], konec: number, legato: number): Polozka[] {
   const podleStartu = new Map<number, NotaTik[]>();
   for (const n of noty) {
     const seznam = podleStartu.get(n.start);
@@ -99,7 +113,9 @@ function osnovaNaPolozky(noty: readonly NotaTik[], konec: number): Polozka[] {
     if (start > kurzor) out.push({ start: kurzor, delka: start - kurzor, noty: [] });
     const skupina = podleStartu.get(start)!;
     const dalsi = starty[i + 1] ?? konec;
-    const delka = Math.max(1, Math.min(Math.min(...skupina.map((n) => n.delka)), dalsi - start));
+    const merena = Math.min(...skupina.map((n) => n.delka));
+    const doDalsi = dalsi - start;
+    const delka = Math.max(1, Math.min(doDalsi - merena <= legato ? doDalsi : merena, doDalsi));
     out.push({ start, delka, noty: skupina });
     kurzor = start + delka;
   }
@@ -226,18 +242,24 @@ export function zapisMusicXml(
   nastaveni: NastaveniNotace = {},
 ): string {
   const delicBod = nastaveni.delicBod ?? 60;
+  const legato = Math.round((nastaveni.legato ?? 1) * DILKU_NA_DOBU);
+  const tolerance = nastaveni.tolerancePasma ?? 12;
   const naTiky = (n: Nota): NotaTik => ({
     midi: n.midi,
     start: Math.round(n.doba * DILKU_NA_DOBU),
     delka: Math.max(1, Math.round(n.delka * DILKU_NA_DOBU)),
   });
 
-  const prava = noty
-    .filter((n) => (n.ruka === 'neznama' ? n.midi >= delicBod : n.ruka === 'prava'))
-    .map(naTiky);
-  const leva = noty
-    .filter((n) => (n.ruka === 'neznama' ? n.midi < delicBod : n.ruka === 'leva'))
-    .map(naTiky);
+  // Ruka urcuje osnovu, dokud nota nevybocuje prilis daleko. Hluboky ton prave
+  // ruky se stejne sazi do basoveho klice — takhle to dela i kazdy sazec.
+  const doOsnovy = (n: Nota): 'prava' | 'leva' => {
+    if (n.midi < delicBod - tolerance) return 'leva';
+    if (n.midi > delicBod + tolerance) return 'prava';
+    if (n.ruka === 'neznama') return n.midi >= delicBod ? 'prava' : 'leva';
+    return n.ruka;
+  };
+  const prava = noty.filter((n) => doOsnovy(n) === 'prava').map(naTiky);
+  const leva = noty.filter((n) => doOsnovy(n) === 'leva').map(naTiky);
 
   const delkaTaktu = Math.round((tempo.citatel * 4 * DILKU_NA_DOBU) / tempo.jmenovatel);
   const posledni = Math.max(
@@ -247,8 +269,8 @@ export function zapisMusicXml(
   );
   const konec = Math.ceil(posledni / delkaTaktu) * delkaTaktu;
 
-  const taktyPrava = rozdelPoTaktech(osnovaNaPolozky(prava, konec), delkaTaktu);
-  const taktyLeva = rozdelPoTaktech(osnovaNaPolozky(leva, konec), delkaTaktu);
+  const taktyPrava = rozdelPoTaktech(osnovaNaPolozky(prava, konec, legato), delkaTaktu);
+  const taktyLeva = rozdelPoTaktech(osnovaNaPolozky(leva, konec, legato), delkaTaktu);
   const pocetTaktu = Math.max(taktyPrava.length, taktyLeva.length, 1);
 
   const casti: string[] = [];

@@ -9,3 +9,6 @@ export * from './tempo.js';
 export * from './tonina.js';
 export * from './notace.js';
 export * from './midi.js';
+export * from './nahledy.js';
+export * from './onsety.js';
+export * from './sladeni.js';

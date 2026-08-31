@@ -16,6 +16,7 @@ import {
   type NastaveniTempa,
 } from './jadro/tempo.js';
 import { odhadniToninu, type Tonina } from './jadro/tonina.js';
+import type { Obraz } from './jadro/obraz.js';
 import type { DrahyRukou, GeometrieKlaviatury, Nota, Tempo, Udalost } from './jadro/typy.js';
 import { nactiVzorky } from './audio/zvuk.js';
 import { nactiInfo, type InfoVidea } from './video/ffmpeg.js';
@@ -38,6 +39,8 @@ export interface NastaveniPrepisu {
 export interface VysledekPrepisu {
   info: InfoVidea;
   geometrie: GeometrieKlaviatury;
+  /** Klidovy snimek, ze ktereho geometrie vznikla; slouzi ke kontrole kalibrace. */
+  pozadi: Obraz;
   stopa: Stopa;
   drahy: DrahyRukou;
   udalosti: Udalost[];
@@ -75,6 +78,7 @@ export async function prepisVideo(
     nastaveni.vzorkuKalibrace ?? 40,
   );
   const geometrie = kalibrace.geometrie;
+  const pozadi = kalibrace.pozadi;
   hlas(`nalezeno ${geometrie.klavesy.length} klaves, rozsah MIDI ${geometrie.klavesy[0]?.midi}-${geometrie.klavesy[geometrie.klavesy.length - 1]?.midi}`);
 
   hlas('ctu video');
@@ -122,6 +126,7 @@ export async function prepisVideo(
   return {
     info,
     geometrie,
+    pozadi,
     stopa,
     drahy,
     udalosti,

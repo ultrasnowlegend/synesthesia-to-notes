@@ -133,3 +133,35 @@ test('MIDI soubor ma hlavicku a tri stopy', () => {
   assert.equal(text.split('MTrk').length - 1, 3, 'ridici stopa a dve ruce');
   assert.equal(data[11], 3, 'hlavicka hlasi tri stopy');
 });
+
+test('legato vyplni kratkou mezeru misto pomlky', () => {
+  const noty: Nota[] = [
+    { midi: 72, doba: 0, delka: 0.25, ruka: 'prava', hlasitost: 80 },
+    { midi: 74, doba: 1, delka: 0.25, ruka: 'prava', hlasitost: 80 },
+  ];
+  const tempo = { bpm: 120, offset: 0, citatel: 4, jmenovatel: 4, shoda: 1 };
+
+  const doslovne = zapisMusicXml(noty, tempo, 0, { legato: 0 });
+  const spojene = zapisMusicXml(noty, tempo, 0, { legato: 1 });
+
+  assert.ok(
+    (doslovne.match(/<rest\/>/g) ?? []).length > (spojene.match(/<rest\/>/g) ?? []).length,
+    'legato ma pocet pomlk snizit',
+  );
+  assert.match(spojene, /<duration>24<\/duration>/, 'prvni ton se natahne na celou dobu');
+});
+
+test('hluboky ton prave ruky se sazi do basoveho klice', () => {
+  const noty: Nota[] = [
+    { midi: 40, doba: 0, delka: 1, ruka: 'prava', hlasitost: 80 },
+    { midi: 84, doba: 1, delka: 1, ruka: 'leva', hlasitost: 80 },
+  ];
+  const xml = zapisMusicXml(noty, { bpm: 120, offset: 0, citatel: 4, jmenovatel: 4, shoda: 1 }, 0, {
+    delicBod: 60,
+  });
+  const takt = xml.slice(xml.indexOf('<measure number="1"'), xml.indexOf('<measure number="2"'));
+  const hluboky = takt.slice(takt.indexOf('<octave>2</octave>'));
+  assert.match(hluboky.slice(0, 400), /<staff>2<\/staff>/, 'E2 patri do basove osnovy');
+  const vysoky = takt.slice(takt.indexOf('<octave>6</octave>'));
+  assert.match(vysoky.slice(0, 400), /<staff>1<\/staff>/, 'C6 patri do houslove osnovy');
+});

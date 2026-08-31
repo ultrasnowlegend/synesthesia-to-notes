@@ -93,7 +93,9 @@ async function hlavni(): Promise<number> {
   }
 
   const nazev = basename(prepinace.video, extname(prepinace.video));
-  if (!prepinace.ticho && !prepinace.json) {
+  // Prubeh jde na chybovy vystup i pri --json: volajici tak muze ukazovat, co se
+  // deje, a zaroven si precist vysledek ze standardniho vystupu.
+  if (!prepinace.ticho) {
     prepinace.nastaveni.naStav = (z) => process.stderr.write(`  ${z}\n`);
   }
 

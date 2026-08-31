@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Prevod videa s Synthesia-style efekty zpet na notovy zapis",
   "type": "module",
-  "main": "dist/src/index.js",
+  "main": "dist-electron/hlavni.js",
   "types": "dist/src/index.d.ts",
   "exports": {
     ".": "./dist/src/index.js",
@@ -19,13 +19,28 @@
     "build": "tsc -b",
     "watch": "tsc -b --watch",
     "test": "node --test dist/test/",
-    "cli": "node dist/src/cli.js"
+    "cli": "node dist/src/cli.js",
+    "dev": "vite",
+    "build:app": "vite build",
+    "start": "electron ."
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
     "@types/node": "^24.13.2",
-    "typescript": "~6.0.2"
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@vitejs/plugin-react": "^4.7.0",
+    "electron": "^41.7.1",
+    "typescript": "~6.0.2",
+    "vite": "^6.4.3",
+    "vite-plugin-electron": "^1.1.2",
+    "vite-plugin-electron-renderer": "^1.0.0"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "verovio": "^6.3.0"
   }
 }
