@@ -135,7 +135,7 @@ pre .k { color: var(--tlumene); }
   <p class="eyebrow">Návrh aplikace · synesthesia-to-notes</p>
   <h1>Z videa zpět do not</h1>
   <p class="perex">Nahrávka improvizace s padajícími pruhy v sobě noty už obsahuje — jen v obraze místo v zápisu. Tady je, jak je dostat ven.</p>
-  <p class="stav">Návrh k odsouhlasení · skutečný klavír, ruce bez barev</p>
+  <p class="stav">Jádro a CLI hotové · čeká na ukázkové video</p>
 </header>
 
 <hr class="del">
@@ -313,7 +313,7 @@ pre .k { color: var(--tlumene); }
 <section>
   <p class="eyebrow">Krok 1</p>
   <h2>Co se z videa opravdu přenáší</h2>
-  <p class="lead">Tři pixelové řádky nad klaviaturou v plné šířce, a k tomu pás klaviatury zmenšený na 320 × 24 kvůli sledování rukou.</p>
+  <p class="lead">Dvanáct pixelových řádků ve čtyřech zónách, a k tomu pás klaviatury zmenšený na 320 × 24 kvůli sledování rukou.</p>
 
   <figure>
     <div class="ramec">
@@ -330,8 +330,8 @@ pre .k { color: var(--tlumene); }
         <path d="M356,196 L410,200" class="d-cara" marker-end="url(#h3)"></path>
 
         <rect x="416" y="76" width="240" height="64" rx="7" class="d-box-akc"></rect>
-        <text x="536" y="102" class="d-lbl" text-anchor="middle">3 řádky, plná šířka</text>
-        <text x="536" y="119" class="d-sub" text-anchor="middle">1920 × 3 px · 17 kB / snímek</text>
+        <text x="536" y="102" class="d-lbl" text-anchor="middle">12 řádků, plná šířka</text>
+        <text x="536" y="119" class="d-sub" text-anchor="middle">4 zóny po třech · 69 kB / snímek</text>
         <path d="M656,108 L692,108" class="d-cara" marker-end="url(#h3)"></path>
         <text x="700" y="100" class="d-lbl-s">detekce not</text>
         <text x="700" y="116" class="d-sub">88 × RGB / snímek</text>
@@ -344,7 +344,7 @@ pre .k { color: var(--tlumene); }
         <text x="700" y="210" class="d-sub">2 polohy / snímek</text>
       </svg>
     </div>
-    <figcaption><b>Obrázek 4.</b> Zmenšení pásu na 320 × 24 stačí — hledáme v něm dvě velké skvrny, ne detaily. Detekci not tím nezhoršíme, protože ta běží nad plným rozlišením řádku dopadu.</figcaption>
+    <figcaption><b>Obrázek 4.</b> Zóny jsou čtyři: řádek dopadu, druhý řádek o kus výš kvůli měření rychlosti pádu, a těla bílých a černých kláves jako kontrola. V každé tři sousední řádky, aby jedna vadná řádka nerozhodila průměr.</figcaption>
   </figure>
 
   <figure>
@@ -363,14 +363,14 @@ pre .k { color: var(--tlumene); }
         <text x="714" y="114" class="d-lbl">10 GB</text>
 
         <text x="212" y="160" class="d-lbl-s" text-anchor="end">co z ffmpegu vylézá u nás</text>
-        <text x="212" y="174" class="d-sub" text-anchor="end">3 řádky + zmenšený pás</text>
-        <rect x="224" y="144" width="326" height="30" rx="4" fill="var(--tlumene)" opacity="0.3"></rect>
-        <text x="560" y="164" class="d-lbl">360 MB</text>
+        <text x="212" y="174" class="d-sub" text-anchor="end">12 řádků + zmenšený pás</text>
+        <rect x="224" y="144" width="365" height="30" rx="4" fill="var(--tlumene)" opacity="0.3"></rect>
+        <text x="599" y="164" class="d-lbl">830 MB</text>
 
         <text x="212" y="210" class="d-lbl-s" text-anchor="end" fill="var(--akcent)">co zůstane na disku</text>
         <text x="212" y="224" class="d-sub" text-anchor="end">stopa barev + dráhy rukou</text>
-        <rect x="224" y="194" width="126" height="30" rx="4" fill="var(--akcent)"></rect>
-        <text x="360" y="214" class="d-lbl" fill="var(--akcent)">5 MB</text>
+        <rect x="224" y="194" width="143" height="30" rx="4" fill="var(--akcent)"></rect>
+        <text x="377" y="214" class="d-lbl" fill="var(--akcent)">7 MB</text>
 
         <line x1="224" y1="34" x2="224" y2="236" class="d-osa"></line>
       </svg>
@@ -503,7 +503,59 @@ pre .k { color: var(--tlumene); }
 <section>
   <p class="eyebrow">Krok 3</p>
   <h2>Nota vzniká průchodem pruhu řádkem dopadu</h2>
-  <p class="lead">Jak dlouho pruh kryje řádek, tak dlouhá je nota. Dva opakované tóny mají mezi pruhy mezeru, takže se oddělí samy.</p>
+  <p class="lead">Nejdřív ale musí být jasné, co je „sloupec klávesy". Černá klávesa leží v obraze <i>uvnitř</i> šířky obou sousedních bílých.</p>
+
+  <figure>
+    <div class="ramec">
+      <svg viewBox="0 0 860 300" role="img" aria-label="Sloupec černé klávesy leží uvnitř šířky obou sousedních bílých, takže pruh bílé klávesy jej zabarví; vzorkuje se proto jen výhradní pruh každé klávesy">
+        <defs><marker id="h6a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-hrot"></path></marker></defs>
+
+        <text x="20" y="24" class="d-lane">CO SE STANE, KDYŽ SE ČTE CELÁ ŠÍŘKA KLÁVESY</text>
+        <rect x="40" y="60" width="140" height="52" rx="4" fill="var(--prava)"></rect>
+        <text x="110" y="52" class="d-sub" text-anchor="middle">pruh klávesy C</text>
+
+        <g>
+          <rect x="40" y="130" width="139" height="90" class="d-bila"></rect>
+          <rect x="180" y="130" width="139" height="90" class="d-bila"></rect>
+          <rect x="320" y="130" width="139" height="90" class="d-bila"></rect>
+          <rect x="140" y="130" width="80" height="54" class="d-cerna"></rect>
+          <rect x="280" y="130" width="80" height="54" class="d-cerna"></rect>
+        </g>
+        <text x="110" y="240" class="d-lbl" text-anchor="middle">C</text>
+        <text x="250" y="240" class="d-lbl" text-anchor="middle">D</text>
+        <text x="390" y="240" class="d-lbl" text-anchor="middle">E</text>
+        <text x="180" y="203" class="d-sub" text-anchor="middle" fill="var(--bila-klavesa)">C♯</text>
+
+        <path d="M140,264 L140,272 L220,272 L220,264" stroke="var(--pozor)" stroke-width="1.6" fill="none"></path>
+        <text x="180" y="288" class="d-lbl-s" text-anchor="middle" fill="var(--pozor)">sloupec C♯</text>
+        <path d="M172,124 L172,60" stroke="var(--pozor)" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#h6a)"></path>
+        <text x="196" y="100" class="d-pop" fill="var(--pozor)">zabarvený pruhem C</text>
+        <text x="196" y="116" class="d-pop" fill="var(--pozor)">→ falešný tón</text>
+
+        <text x="500" y="24" class="d-lane">VÝHRADNÍ PRUH KAŽDÉ KLÁVESY</text>
+        <g>
+          <rect x="500" y="130" width="139" height="90" class="d-bila"></rect>
+          <rect x="640" y="130" width="139" height="90" class="d-bila"></rect>
+          <rect x="780" y="130" width="60" height="90" class="d-bila"></rect>
+          <rect x="600" y="130" width="80" height="54" class="d-cerna"></rect>
+          <rect x="740" y="130" width="80" height="54" class="d-cerna"></rect>
+        </g>
+        <rect x="504" y="134" width="92" height="82" fill="var(--akcent)" opacity="0.4"></rect>
+        <rect x="684" y="134" width="52" height="82" fill="var(--akcent)" opacity="0.4"></rect>
+        <rect x="824" y="134" width="14" height="82" fill="var(--akcent)" opacity="0.4"></rect>
+        <rect x="604" y="134" width="72" height="46" fill="var(--akcent)" opacity="0.4"></rect>
+        <rect x="744" y="134" width="72" height="46" fill="var(--akcent)" opacity="0.4"></rect>
+        <text x="570" y="240" class="d-lbl" text-anchor="middle">C</text>
+        <text x="710" y="240" class="d-lbl" text-anchor="middle">D</text>
+        <text x="640" y="203" class="d-sub" text-anchor="middle" fill="var(--bila-klavesa)">C♯</text>
+        <text x="500" y="272" class="d-lbl-s" fill="var(--akcent)">čte se jen to, co klávesa s nikým nesdílí</text>
+        <text x="500" y="290" class="d-sub">u D zbývá jen úzký proužek mezi C♯ a D♯ — a stačí to</text>
+      </svg>
+    </div>
+    <figcaption><b>Obrázek 8.</b> Tohle vyplavalo až z běžícího řetězce: na dvanáct správných not přibylo patnáct falešných, všechny na černých klávesách sousedících s hranou notou.</figcaption>
+  </figure>
+
+  <p class="lead">Pak už platí to jednoduché: jak dlouho pruh kryje řádek, tak dlouhá je nota. Dva opakované tóny mají mezi pruhy mezeru, takže se oddělí samy.</p>
 
   <figure>
     <div class="ramec">
@@ -541,7 +593,7 @@ pre .k { color: var(--tlumene); }
         <text x="230" y="284" class="d-sub">tělo klávesy se čte jako kontrola tam, kde ji zrovna nezakrývá ruka</text>
       </svg>
     </div>
-    <figcaption><b>Obrázek 8.</b> Oproti kreslené klaviatuře tu odpadá celý problém opakovaných tónů: dva pruhy mají mezi sebou mezeru vždycky, i když by na klávese nebyla vidět.</figcaption>
+    <figcaption><b>Obrázek 9.</b> Oproti kreslené klaviatuře tu odpadá celý problém opakovaných tónů: dva pruhy mají mezi sebou mezeru vždycky, i když by na klávese nebyla vidět.</figcaption>
   </figure>
 </section>
 
@@ -613,7 +665,7 @@ pre .k { color: var(--tlumene); }
         <text x="286" y="292" class="d-sub">když pruhy barvu rukou mají, použije se rovnou a tohle je jen kontrola</text>
       </svg>
     </div>
-    <figcaption><b>Obrázek 9.</b> Sledování rukou je jediná část návrhu, kde se opravdu něco odhaduje. Proto je v aplikaci vidět jako dvě dráhy nad klaviaturou a půjde je ručně opravit v místech, kde se ruce zkříží.</figcaption>
+    <figcaption><b>Obrázek 10.</b> Sledování rukou je jediná část návrhu, kde se opravdu něco odhaduje. Proto je v aplikaci vidět jako dvě dráhy nad klaviaturou a půjde je ručně opravit v místech, kde se ruce zkříží.</figcaption>
   </figure>
 </section>
 
@@ -666,7 +718,7 @@ pre .k { color: var(--tlumene); }
         <text x="610" y="290" class="d-sub" text-anchor="middle">zamítnuto</text>
       </svg>
     </div>
-    <figcaption><b>Obrázek 10.</b> Výsledek se ještě váží preferencí obvyklých temp — bez toho by skoro vždy vyhrál dvojnásobek nebo polovina, protože i tam údery na mřížku sedí.</figcaption>
+    <figcaption><b>Obrázek 11.</b> Výsledek se ještě váží preferencí obvyklých temp — bez toho by skoro vždy vyhrál dvojnásobek nebo polovina, protože i tam údery na mřížku sedí.</figcaption>
   </figure>
 
   <figure>
@@ -743,7 +795,7 @@ pre .k { color: var(--tlumene); }
         <text x="174" y="260" class="d-sub" text-anchor="middle">1/8</text>
       </svg>
     </div>
-    <figcaption><b>Obrázek 11.</b> Odhad je vždycky jen návrh — BPM, posun i hustotu mřížky budeš mít v aplikaci jako tři ovladače nad živým náhledem not.</figcaption>
+    <figcaption><b>Obrázek 12.</b> Odhad je vždycky jen návrh — BPM, posun i hustotu mřížky budeš mít v aplikaci jako tři ovladače nad živým náhledem not.</figcaption>
   </figure>
 
   <figure>
@@ -795,7 +847,7 @@ pre .k { color: var(--tlumene); }
         <text x="20" y="236" class="d-sub">porovná se všech 12 durových a 12 mollových profilů, vyhraje nejvyšší korelace</text>
       </svg>
     </div>
-    <figcaption><b>Obrázek 12.</b> Předznamenání se určuje z toho, jak dlouho která třída tónů zněla — ne z toho, kolik jich bylo.</figcaption>
+    <figcaption><b>Obrázek 13.</b> Předznamenání se určuje z toho, jak dlouho která třída tónů zněla — ne z toho, kolik jich bylo.</figcaption>
   </figure>
 </section>
 
@@ -857,7 +909,7 @@ pre .k { color: var(--tlumene); }
         <text x="360" y="160" class="d-pop">kotva mřížky</text>
       </svg>
     </div>
-    <figcaption><b>Obrázek 13.</b> Když se onsety ze zvuku nepodaří najít, celý řetězec funguje dál — jen s přesností jednoho snímku.</figcaption>
+    <figcaption><b>Obrázek 14.</b> Když se onsety ze zvuku nepodaří najít, celý řetězec funguje dál — jen s přesností jednoho snímku.</figcaption>
   </figure>
 </section>
 
@@ -910,7 +962,7 @@ pre .k { color: var(--tlumene); }
         <text x="430" y="188" class="d-pop">žádný import.</text>
       </svg>
     </div>
-    <figcaption><b>Obrázek 14.</b> Kdyby SuperSystem aplikaci importoval jako knihovnu, svázaly by se jim verze Electronu a Reactu — přesně tomu se tímhle vyhýbáme.</figcaption>
+    <figcaption><b>Obrázek 15.</b> Kdyby SuperSystem aplikaci importoval jako knihovnu, svázaly by se jim verze Electronu a Reactu — přesně tomu se tímhle vyhýbáme.</figcaption>
   </figure>
 
 <pre><code>synesthesia-to-notes/
@@ -935,6 +987,81 @@ pre .k { color: var(--tlumene); }
 <hr class="del">
 
 <section>
+  <p class="eyebrow">Stav</p>
+  <h2>Ověřeno na umělé nahrávce</h2>
+  <p class="lead">Než přijde tvoje ukázka, testy generují vlastní video: klaviatura zakrytá rukama, pruhy mizící pod ní, skutečný ffmpeg a skutečný kodek.</p>
+
+  <figure>
+    <div class="ramec">
+      <svg viewBox="0 0 860 268" role="img" aria-label="Umělá testovací nahrávka a naměřené výsledky: dvanáct z dvanácti not, správné ruce i bez barevného rozlišení, tempo 119,75 místo 120 a rychlost pádu 8,60 místo 8,67 pixelu za snímek">
+        <rect x="20" y="40" width="360" height="200" rx="6" fill="var(--cerna-klavesa)" stroke="var(--linka)" stroke-width="1.4"></rect>
+        <text x="20" y="30" class="d-lane">CO TESTY VYKRESLÍ</text>
+        <rect x="104" y="76" width="30" height="58" rx="4" fill="var(--prava)"></rect>
+        <rect x="228" y="60" width="18" height="42" rx="3" fill="var(--prava)"></rect>
+        <rect x="160" y="104" width="30" height="34" rx="4" fill="var(--prava)" opacity="0.5"></rect>
+        <line x1="26" y1="146" x2="374" y2="146" class="d-akc"></line>
+        <g>
+          <rect x="28" y="160" width="42" height="70" class="d-bila"></rect>
+          <rect x="71" y="160" width="42" height="70" class="d-bila"></rect>
+          <rect x="114" y="160" width="42" height="70" class="d-bila"></rect>
+          <rect x="157" y="160" width="42" height="70" class="d-bila"></rect>
+          <rect x="200" y="160" width="42" height="70" class="d-bila"></rect>
+          <rect x="243" y="160" width="42" height="70" class="d-bila"></rect>
+          <rect x="286" y="160" width="42" height="70" class="d-bila"></rect>
+          <rect x="329" y="160" width="43" height="70" class="d-bila"></rect>
+          <rect x="59" y="160" width="24" height="42" class="d-cerna"></rect>
+          <rect x="102" y="160" width="24" height="42" class="d-cerna"></rect>
+          <rect x="188" y="160" width="24" height="42" class="d-cerna"></rect>
+          <rect x="231" y="160" width="24" height="42" class="d-cerna"></rect>
+          <rect x="274" y="160" width="24" height="42" class="d-cerna"></rect>
+        </g>
+        <g class="d-ruka">
+          <rect x="86" y="186" width="70" height="36" rx="14"></rect>
+          <rect x="240" y="186" width="70" height="36" rx="14"></rect>
+        </g>
+
+        <text x="420" y="30" class="d-lane">NAMĚŘENO</text>
+        <line x1="420" y1="44" x2="840" y2="44" class="d-osa"></line>
+        <text x="700" y="60" class="d-sub" text-anchor="end">pravda</text>
+        <text x="840" y="60" class="d-sub" text-anchor="end">naměřeno</text>
+
+        <text x="420" y="90" class="d-lbl-s">nalezené noty</text>
+        <text x="700" y="90" class="d-sub" text-anchor="end">12</text>
+        <text x="840" y="90" class="d-lbl-s" text-anchor="end" fill="var(--leva)">12</text>
+
+        <text x="420" y="122" class="d-lbl-s">délky not</text>
+        <text x="700" y="122" class="d-sub" text-anchor="end">—</text>
+        <text x="840" y="122" class="d-lbl-s" text-anchor="end" fill="var(--leva)">do 0,03 s</text>
+
+        <text x="420" y="154" class="d-lbl-s">přiřazení rukou bez barev</text>
+        <text x="700" y="154" class="d-sub" text-anchor="end">12</text>
+        <text x="840" y="154" class="d-lbl-s" text-anchor="end" fill="var(--leva)">12</text>
+
+        <text x="420" y="186" class="d-lbl-s">tempo</text>
+        <text x="700" y="186" class="d-sub" text-anchor="end">120,00 BPM</text>
+        <text x="840" y="186" class="d-lbl-s" text-anchor="end" fill="var(--leva)">119,75 BPM</text>
+
+        <text x="420" y="218" class="d-lbl-s">rychlost pádu</text>
+        <text x="700" y="218" class="d-sub" text-anchor="end">8,67 px/sn.</text>
+        <text x="840" y="218" class="d-lbl-s" text-anchor="end" fill="var(--leva)">8,60 px/sn.</text>
+
+        <text x="420" y="250" class="d-lbl-s">předznamenání</text>
+        <text x="700" y="250" class="d-sub" text-anchor="end">C dur</text>
+        <text x="840" y="250" class="d-lbl-s" text-anchor="end" fill="var(--leva)">C dur</text>
+        <line x1="420" y1="100" x2="840" y2="100" class="d-osa" opacity="0.5"></line>
+        <line x1="420" y1="132" x2="840" y2="132" class="d-osa" opacity="0.5"></line>
+        <line x1="420" y1="164" x2="840" y2="164" class="d-osa" opacity="0.5"></line>
+        <line x1="420" y1="196" x2="840" y2="196" class="d-osa" opacity="0.5"></line>
+        <line x1="420" y1="228" x2="840" y2="228" class="d-osa" opacity="0.5"></line>
+      </svg>
+    </div>
+    <figcaption><b>Obrázek 16.</b> Umělá nahrávka nenahradí tu tvoji — neví nic o skutečném osvětlení, perspektivě ani o tom, jak přesně tvoje aplikace pruhy kreslí. Ověřuje ale, že řetězec jako celek drží.</figcaption>
+  </figure>
+</section>
+
+<hr class="del">
+
+<section>
   <p class="eyebrow">Postup</p>
   <h2>Plán po etapách</h2>
 
@@ -943,15 +1070,17 @@ pre .k { color: var(--tlumene); }
       <svg viewBox="0 0 880 168" role="img" aria-label="Šest etap: jádro je rozepsané, následuje ffmpeg a CLI, kalibrace na ukázce, sledování rukou, aplikace se sazbou, a nakonec napojení do SuperSystemu">
         <line x1="60" y1="84" x2="820" y2="84" class="d-osa"></line>
 
+        <line x1="60" y1="84" x2="212" y2="84" stroke="var(--akcent)" stroke-width="2.5"></line>
+
         <circle cx="60" cy="84" r="13" fill="var(--akcent)"></circle>
         <text x="60" y="89" class="d-lbl" text-anchor="middle" fill="var(--plocha)">1</text>
         <text x="60" y="52" class="d-lbl-s" text-anchor="middle">Jádro</text>
-        <text x="60" y="36" class="d-sub" text-anchor="middle" fill="var(--akcent)">rozepsané</text>
+        <text x="60" y="36" class="d-sub" text-anchor="middle" fill="var(--akcent)">hotové</text>
 
-        <circle cx="212" cy="84" r="13" fill="var(--plocha)" stroke="var(--tlumene)" stroke-width="1.6"></circle>
-        <text x="212" y="89" class="d-lbl" text-anchor="middle">2</text>
+        <circle cx="212" cy="84" r="13" fill="var(--akcent)"></circle>
+        <text x="212" y="89" class="d-lbl" text-anchor="middle" fill="var(--plocha)">2</text>
         <text x="212" y="122" class="d-lbl-s" text-anchor="middle">ffmpeg a CLI</text>
-        <text x="212" y="138" class="d-sub" text-anchor="middle">první reálný přepis</text>
+        <text x="212" y="138" class="d-sub" text-anchor="middle" fill="var(--akcent)">hotové, ověřené testy</text>
 
         <circle cx="364" cy="84" r="13" fill="var(--plocha)" stroke="var(--tlumene)" stroke-width="1.6"></circle>
         <text x="364" y="89" class="d-lbl" text-anchor="middle">3</text>
@@ -974,7 +1103,7 @@ pre .k { color: var(--tlumene); }
         <text x="820" y="138" class="d-sub" text-anchor="middle">modul v SuperSystemu</text>
       </svg>
     </div>
-    <figcaption><b>Obrázek 15.</b> Napojení do SuperSystemu je záměrně poslední — dokud není hotové, nemůže svazovat návrh aplikace.</figcaption>
+    <figcaption><b>Obrázek 17.</b> Napojení do SuperSystemu je záměrně poslední — dokud není hotové, nemůže svazovat návrh aplikace.</figcaption>
   </figure>
 </section>
 
@@ -987,6 +1116,7 @@ pre .k { color: var(--tlumene); }
     <div class="karta"><span class="znacka">Největší riziko</span><h3>Zkřížené ruce</h3><p>Když pravá hraje pod levou, přiřazení podle vzdálenosti selže. Pojistka: ruční oprava v místě zkřížení.</p></div>
     <div class="karta"><span class="znacka">Riziko</span><h3>Pohyblivá kamera</h3><p>Kalibrace platí pro jednu polohu záběru. Při ustřižení nebo zoomu se musí přepočítat.</p></div>
     <div class="karta"><span class="znacka">Riziko</span><h3>Rubato</h3><p>Improvizace, která dýchá, nemá jedno BPM. Pojistka: ruční tempo, případně zápis bez taktů.</p></div>
+    <div class="karta"><span class="znacka">Omezení</span><h3>Mezera pod dva snímky</h3><p>Při 30 fps je krok 33 ms. Dva stejné tóny s kratší mezerou splynou v jeden — tady pomůže jedině zvuk.</p></div>
     <div class="karta"><span class="znacka">Omezení</span><h3>Pedál</h3><p>Není vidět. Délky odpovídají pruhu, ne doznění tónu — pro čitelnost spíš výhoda.</p></div>
   </div>
 
