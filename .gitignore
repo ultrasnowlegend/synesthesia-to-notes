@@ -4,3 +4,5 @@ dist-app/
 *.tsbuildinfo
 .vystup/
 vzorky/
+*.mp4
+*.raw

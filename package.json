@@ -3,21 +3,23 @@
   "version": "0.1.0",
   "description": "Prevod videa s Synthesia-style efekty zpet na notovy zapis",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./jadro": "./dist/jadro/index.js"
+    ".": "./dist/src/index.js",
+    "./jadro": "./dist/src/jadro/index.js"
   },
   "bin": {
-    "syn2noty": "dist/cli.js"
+    "syn2noty": "dist/src/cli.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "watch": "tsc -b --watch",
     "test": "node --test dist/test/",
-    "cli": "node dist/cli.js"
+    "cli": "node dist/src/cli.js"
   },
   "engines": {
     "node": ">=20"

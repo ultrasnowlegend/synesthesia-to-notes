@@ -44,7 +44,11 @@ export function medianSnimku(snimky: readonly Obraz[]): Obraz {
   return { sirka: prvni.sirka, vyska: prvni.vyska, data: out };
 }
 
-/** Prahovani metodou Otsu nad histogramem jasu 0..255. */
+/**
+ * Prahovani metodou Otsu nad histogramem jasu 0..255. Vraci hodnotu na pul cesty
+ * mezi posledni tridou pozadi a prvni tridou popredi, aby porovnani `hodnota >
+ * prah` sedelo i pro necela cisla, ze kterych se histogram zaokrouhloval.
+ */
 export function otsu(hodnoty: readonly number[]): number {
   const hist = new Array<number>(256).fill(0);
   for (const v of hodnoty) hist[Math.max(0, Math.min(255, Math.round(v)))]!++;
@@ -70,7 +74,7 @@ export function otsu(hodnoty: readonly number[]): number {
       prah = t;
     }
   }
-  return prah;
+  return prah + 0.5;
 }
 
 export interface Usek {

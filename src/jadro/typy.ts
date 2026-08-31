@@ -1,4 +1,4 @@
-/** Ruka podle barvy pruhu ve videu; slouzi k rozdeleni do dvou osnov. */
+/** Ruka, ke ktere nota patri; urcuje osnovu ve vyslednem zapisu. */
 export type Ruka = 'leva' | 'prava' | 'neznama';
 
 /** Jedna klavesa nalezena v obraze, vcetne prirazene vysky tonu. */
@@ -10,17 +10,24 @@ export interface Klavesa {
   /** Pravy okraj v pixelech (vcetne). */
   x2: number;
   stred: number;
+  /**
+   * Vyhradni rozsah, ktery s zadnou jinou klavesou nesdili. Cerna klavesa lezi
+   * uvnitr sirky obou sousednich bilych, takze pruh bile klavesy by zabarvil i
+   * sloupec cerne; vzorkuje se proto jen tenhle uzsi pruh.
+   */
+  vx1: number;
+  vx2: number;
 }
 
 /**
  * Geometrie klaviatury odectena z jednoho snimku. Souradnice jsou v pixelech
- * puvodniho videa; vsechny dalsi kroky uz pracuji jen s timto popisem, nikdy
- * znovu s celym obrazem.
+ * puvodniho videa a plati pro jedno konkretni video: kamera je behem nej
+ * staticka, ale mezi nahravkami se posouva, takze se geometrie nikdy nesdili.
  */
 export interface GeometrieKlaviatury {
   sirkaObrazu: number;
   vyskaObrazu: number;
-  /** Y horni hrany klaviatury (zacatek cernych klaves). */
+  /** Y horni hrany klaviatury. */
   hornihrana: number;
   /** Y dolni hrany klaviatury. */
   dolniHrana: number;
@@ -28,8 +35,10 @@ export interface GeometrieKlaviatury {
   radekBilych: number;
   /** Y radku, na kterem se vzorkuji cerne klavesy. */
   radekCernych: number;
-  /** Y radku tesne nad klaviaturou, kde dopadaji pruhy. */
+  /** Y radku tesne nad klaviaturou; hlavni signal. */
   radekDopadu: number;
+  /** Y druheho radku vyse; z casoveho posunu mezi nimi vyjde rychlost padu. */
+  radekVyssi: number;
   klavesy: Klavesa[];
 }
 
@@ -40,19 +49,11 @@ export interface Barva {
   b: number;
 }
 
-/** Stav jedne klavesy v jednom snimku. */
-export interface VzorekKlavesy {
-  rozsviceno: boolean;
-  barva: Barva;
-  /** Odchylka od klidove barvy, 0..1. Slouzi k ladeni prahu. */
-  odchylka: number;
-}
-
-/** Jeden snimek prevedeny na stavy vsech klaves. */
-export interface Snimek {
-  index: number;
-  cas: number;
-  klavesy: VzorekKlavesy[];
+/** Drahy obou rukou v case; x je v pixelech puvodniho videa, NaN = nenalezeno. */
+export interface DrahyRukou {
+  pocetSnimku: number;
+  /** x[snimek * 2] = leva, x[snimek * 2 + 1] = prava. */
+  x: Float32Array;
 }
 
 /** Surova udalost pred kvantizaci: nota drzena od-do v sekundach. */
@@ -61,16 +62,16 @@ export interface Udalost {
   start: number;
   konec: number;
   ruka: Ruka;
-  /** Prumerna barva pruhu, podle ni se urcuje ruka. */
+  /** Prumerna barva pruhu; kdyz video ruce barvou rozlisuje, urcuje je. */
   barva: Barva;
-  /** Jistota detekce 0..1 (podil snimku, kde byla klavesa jasne rozsvicena). */
+  /** Jistota detekce 0..1. */
   jistota: number;
 }
 
 /** Nota po kvantizaci, pripravena k zapisu do notace. */
 export interface Nota {
   midi: number;
-  /** Zacatek v dobach (quarter notes) od zacatku skladby. */
+  /** Zacatek v dobach od zacatku skladby. */
   doba: number;
   /** Delka v dobach. */
   delka: number;
@@ -83,7 +84,6 @@ export interface Tempo {
   bpm: number;
   /** Cas prvni doby v sekundach. */
   offset: number;
-  /** Citatel/jmenovatel taktu. */
   citatel: number;
   jmenovatel: number;
   /** Jak dobre mrizka sedi na onsety, 0..1. */
@@ -96,6 +96,6 @@ export interface Prepis {
   tempo: Tempo;
   /** Pocet posunek: zaporne = bemoly, kladne = krizky. */
   predznamenani: number;
-  /** MIDI cislo, pod kterym noty patri do basoveho klice (kdyz chybi barvy rukou). */
+  /** MIDI cislo, pod kterym noty bez urcene ruky patri do basoveho klice. */
   delicBod: number;
 }

@@ -1,7 +1,7 @@
 import { medianBarev, odstin, sytost, vzdalenostBarev } from './barvy.js';
 import { otsu } from './obraz.js';
-import { barvaDopadu, barvaKlavesy, type Stopa } from './stopa.js';
-import type { Barva, Ruka, Udalost } from './typy.js';
+import { barva, type Stopa, type Vrstva } from './stopa.js';
+import type { Barva, GeometrieKlaviatury, Ruka, Udalost } from './typy.js';
 
 export interface NastaveniDetekce {
   /** Prah odchylky od klidove barvy, 0..1. Kdyz chybi, urci se z dat. */
@@ -10,50 +10,50 @@ export interface NastaveniDetekce {
   minSnimku?: number;
   /** Mezery kratsi nez tolik snimku spojujeme; vznikaji vyhlazovanim hran. */
   spojMezeruSnimku?: number;
-  /** Delit drzenou klavesu, kdyz nad ni dopadne novy pruh (opakovany ton). */
-  deleniPodleDopadu?: boolean;
-  /** Rozdelit noty na dve ruce podle barvy pruhu. */
-  rozdeliRuce?: boolean;
+  /** Posunout casy o dobu, kterou pruh potrebuje z radku dopadu ke klavesam. */
+  korigujZpozdeni?: boolean;
+  /** Priradit ruce podle odstinu pruhu, kdyz je video rozlisuje. */
+  ruceZBarvy?: boolean;
 }
 
 const VYCHOZI = {
   minSnimku: 2,
   spojMezeruSnimku: 1,
-  deleniPodleDopadu: true,
-  rozdeliRuce: true,
+  korigujZpozdeni: true,
+  ruceZBarvy: true,
 } as const;
 
 /**
- * Klidova barva kazde klavesy = median pres cele video. Klavesa je vetsinu casu
- * nestisknuta i v hustem hrani, takze median ukaze jeji holou barvu bez toho,
- * aby uzivatel musel hledat snimek s tichem.
+ * Klidova barva kazdeho sloupce = median pres cele video. Pruh kryje dane misto
+ * jen zlomek casu, takze median ukaze pozadi i u hustych pasazi; hledat snimek
+ * s tichem neni potreba.
  */
-export function klidoveBarvy(stopa: Stopa, vzorku = 400): Barva[] {
+export function klidoveBarvy(stopa: Stopa, vrstva: Vrstva, vzorku = 400): Barva[] {
   const n = stopa.midi.length;
   const krok = Math.max(1, Math.floor(stopa.pocetSnimku / vzorku));
   const out: Barva[] = [];
   for (let k = 0; k < n; k++) {
     const vzorky: Barva[] = [];
-    for (let f = 0; f < stopa.pocetSnimku; f += krok) vzorky.push(barvaKlavesy(stopa, f, k));
+    for (let f = 0; f < stopa.pocetSnimku; f += krok) vzorky.push(barva(stopa, vrstva, f, k));
     out.push(medianBarev(vzorky));
   }
   return out;
 }
 
-/** Odchylka barvy kazde klavesy od jeji klidove barvy, snimek po snimku. */
-export function odchylky(stopa: Stopa, klid: readonly Barva[]): Float32Array {
+/** Odchylka kazdeho sloupce od jeho klidove barvy, snimek po snimku. */
+export function odchylky(stopa: Stopa, vrstva: Vrstva, klid: readonly Barva[]): Float32Array {
   const n = stopa.midi.length;
   const out = new Float32Array(stopa.pocetSnimku * n);
   for (let f = 0; f < stopa.pocetSnimku; f++) {
     for (let k = 0; k < n; k++) {
-      out[f * n + k] = vzdalenostBarev(barvaKlavesy(stopa, f, k), klid[k]!);
+      out[f * n + k] = vzdalenostBarev(barva(stopa, vrstva, f, k), klid[k]!);
     }
   }
   return out;
 }
 
 /**
- * Prah mezi "klid" a "sviti" hleda Otsu nad rozdelenim vsech odchylek. Rucni
+ * Prah mezi "prazdno" a "pruh" hleda Otsu nad rozdelenim vsech odchylek. Rucni
  * konstanta by nefungovala napric ruznymi vzhledy videa; spodni mez je tu jen
  * proto, aby video, kde se skoro nehraje, nezacalo videt noty v sumu kodeku.
  */
@@ -71,7 +71,7 @@ interface Beh {
   do: number;
 }
 
-/** Souvisle useky, kde je klavesa rozsvicena, s vyhlazenim mezer a zablesku. */
+/** Souvisle useky, kde je sloupec zakryty pruhem, s vyhlazenim mezer a zablesku. */
 function behy(
   sviti: (f: number, k: number) => boolean,
   pocetSnimku: number,
@@ -99,27 +99,67 @@ function behy(
 }
 
 /**
- * Rozdeli drzeny beh tam, kde nad klavesou dopadne novy pruh. Bez toho by se
- * rychle opakovany ton, u ktereho klavesa mezi udery nezhasne, precetl jako
- * jedna dlouha nota.
+ * Rychlost padu pruhu v pixelech za snimek. Tyz pruh mine horni radek driv nez
+ * spodni, takze staci najit posun, pri kterem se oba signaly nejlepe kryji.
+ *
+ * Porovnavaji se jen nabezne hrany, ne cele doby zakryti: dlouhy pruh kryje
+ * radek desitky snimku a korelace celych useku by mela plocho maximum, ze
+ * ktereho by posun nesel odectit. Hrany jsou ostre a maximum je jednoznacne.
+ *
+ * Vraci NaN, kdyz zadny posun zretelne nevyhraje.
  */
-function rozdelPodleDopadu(beh: Beh, dopadSviti: (f: number, k: number) => boolean): Beh[] {
-  const casti: Beh[] = [];
-  let od = beh.od;
-  let mezera = 0;
-  for (let f = beh.od; f <= beh.do; f++) {
-    if (!dopadSviti(f, beh.klavesa)) {
-      mezera++;
-      continue;
+export function zmerRychlostPadu(
+  stopa: Stopa,
+  geometrie: GeometrieKlaviatury,
+  prah: number,
+  klidDopadu: readonly Barva[],
+  klidVyssi: readonly Barva[],
+  maxPosun = 90,
+): number {
+  const n = stopa.midi.length;
+  const rozestup = geometrie.radekDopadu - geometrie.radekVyssi;
+  if (rozestup <= 0) return NaN;
+
+  const nastupy = (vrstva: 'vyssi' | 'dopad', klid: readonly Barva[]): Uint8Array => {
+    const out = new Uint8Array(stopa.pocetSnimku * n);
+    const predchozi = new Uint8Array(n);
+    for (let f = 0; f < stopa.pocetSnimku; f++) {
+      for (let k = 0; k < n; k++) {
+        const kryto = vzdalenostBarev(barva(stopa, vrstva, f, k), klid[k]!) > prah ? 1 : 0;
+        out[f * n + k] = kryto === 1 && predchozi[k] === 0 ? 1 : 0;
+        predchozi[k] = kryto;
+      }
     }
-    if (mezera >= 2 && f - od >= 2) {
-      casti.push({ klavesa: beh.klavesa, od, do: f - 1 });
-      od = f;
+    return out;
+  };
+
+  const nastupVyssi = nastupy('vyssi', klidVyssi);
+  const nastupDopad = nastupy('dopad', klidDopadu);
+
+  let nejlepsiPosun = -1;
+  let nejlepsiSkore = 0;
+  let druheSkore = 0;
+  for (let posun = 1; posun <= maxPosun; posun++) {
+    let shoda = 0;
+    for (let f = 0; f + posun < stopa.pocetSnimku; f++) {
+      const a = f * n;
+      const b = (f + posun) * n;
+      for (let k = 0; k < n; k++) {
+        if (nastupVyssi[a + k] === 1 && nastupDopad[b + k] === 1) shoda++;
+      }
     }
-    mezera = 0;
+    if (shoda > nejlepsiSkore) {
+      druheSkore = nejlepsiSkore;
+      nejlepsiSkore = shoda;
+      nejlepsiPosun = posun;
+    } else if (shoda > druheSkore) {
+      druheSkore = shoda;
+    }
   }
-  casti.push({ klavesa: beh.klavesa, od, do: beh.do });
-  return casti;
+
+  // Bez zretelneho vitezstvi je vysledek jen nejvyssi sum; radeji nic nevracet.
+  if (nejlepsiPosun < 1 || nejlepsiSkore < 6 || nejlepsiSkore < druheSkore * 1.3) return NaN;
+  return rozestup / nejlepsiPosun;
 }
 
 interface Shluk {
@@ -135,21 +175,19 @@ function stredniOdstin(s: Shluk): number {
 }
 
 /**
- * Rozdeli barvy pruhu na dva shluky (leva/prava ruka) k-means na kruhu odstinu.
- * Kdyz jsou vysledne shluky odstinem blizko sebe, video zjevne obe ruce nerozlisuje
- * a vracime null, aby se rozdeleni udelalo az podle vysky tonu.
+ * Rozdeli barvy pruhu na dva shluky odstinu. Kdyz vyjdou blizko sebe, video ruce
+ * barvou nerozlisuje a vraci se null; rozdeleni pak musi udelat sledovani rukou.
  */
-function shlukyRukou(
+export function shlukyRukou(
   vzorky: readonly { odstin: number; midi: number }[],
 ): { levy: number; pravy: number } | null {
   if (vzorky.length < 20) return null;
 
-  let a: Shluk = { cos: 0, sin: 0, soucetMidi: 0, pocet: 0 };
-  let b: Shluk = { cos: 0, sin: 0, soucetMidi: 0, pocet: 0 };
-  // Pocatecni stredy: dva nejvzdalenejsi odstiny v serazenem vzorku.
   const serazene = [...vzorky].sort((x, y) => x.odstin - y.odstin);
   let stredA = serazene[Math.floor(serazene.length * 0.15)]!.odstin;
   let stredB = serazene[Math.floor(serazene.length * 0.85)]!.odstin;
+  let a: Shluk = { cos: 0, sin: 0, soucetMidi: 0, pocet: 0 };
+  let b: Shluk = { cos: 0, sin: 0, soucetMidi: 0, pocet: 0 };
 
   for (let iterace = 0; iterace < 12; iterace++) {
     a = { cos: 0, sin: 0, soucetMidi: 0, pocet: 0 };
@@ -169,67 +207,76 @@ function shlukyRukou(
     stredB = stredniOdstin(b);
   }
 
-  const rozdil = Math.abs(((stredA - stredB + 540) % 360) - 180);
-  if (rozdil < 25) return null;
-
-  const prumerA = a.soucetMidi / a.pocet;
-  const prumerB = b.soucetMidi / b.pocet;
-  return prumerA <= prumerB ? { levy: stredA, pravy: stredB } : { levy: stredB, pravy: stredA };
+  if (Math.abs(((stredA - stredB + 540) % 360) - 180) < 25) return null;
+  return a.soucetMidi / a.pocet <= b.soucetMidi / b.pocet
+    ? { levy: stredA, pravy: stredB }
+    : { levy: stredB, pravy: stredA };
 }
 
 export interface VysledekDetekce {
   udalosti: Udalost[];
   prah: number;
-  klid: Barva[];
-  /** Odstiny shluku rukou, kdyz se je podarilo rozlisit. */
+  /** Rychlost padu pruhu v px/snimek; NaN, kdyz se nepodarilo zmerit. */
+  rychlostPadu: number;
+  /** O kolik sekund byly casy posunuty kvuli odstupu radku dopadu od klaves. */
+  zpozdeni: number;
   odstinyRukou: { levy: number; pravy: number } | null;
 }
 
-/** Prevede casovou stopu barev na seznam drzenych not. */
-export function detekujUdalosti(stopa: Stopa, nastaveni: NastaveniDetekce = {}): VysledekDetekce {
+/**
+ * Prevede casovou stopu na seznam not. Hlavnim signalem je radek tesne nad
+ * klaviaturou: pruh jim projde a doba, po kterou jej kryje, je delka noty.
+ * Dva po sobe jdouci tony se tim oddeli samy, protoze mezi pruhy je vzdy mezera.
+ */
+export function detekujUdalosti(
+  stopa: Stopa,
+  geometrie: GeometrieKlaviatury,
+  nastaveni: NastaveniDetekce = {},
+): VysledekDetekce {
   const n = stopa.midi.length;
   const minSnimku = nastaveni.minSnimku ?? VYCHOZI.minSnimku;
   const spojMezeru = nastaveni.spojMezeruSnimku ?? VYCHOZI.spojMezeruSnimku;
 
-  const klid = klidoveBarvy(stopa);
-  const odch = odchylky(stopa, klid);
+  const klidDopadu = klidoveBarvy(stopa, 'dopad');
+  const odch = odchylky(stopa, 'dopad', klidDopadu);
   const prah = nastaveni.prah ?? odhadniPrah(odch);
   const sviti = (f: number, k: number): boolean => odch[f * n + k]! > prah;
 
-  let vsechnyBehy = behy(sviti, stopa.pocetSnimku, n, minSnimku, spojMezeru);
+  const klidVyssi = klidoveBarvy(stopa, 'vyssi');
+  const rychlostPadu = zmerRychlostPadu(stopa, geometrie, prah, klidDopadu, klidVyssi);
 
-  if (nastaveni.deleniPodleDopadu ?? VYCHOZI.deleniPodleDopadu) {
-    const klidDopadu: Barva[] = [];
-    for (let k = 0; k < n; k++) {
-      const vzorky: Barva[] = [];
-      const krok = Math.max(1, Math.floor(stopa.pocetSnimku / 400));
-      for (let f = 0; f < stopa.pocetSnimku; f += krok) vzorky.push(barvaDopadu(stopa, f, k));
-      klidDopadu.push(medianBarev(vzorky));
-    }
-    const dopadSviti = (f: number, k: number): boolean =>
-      vzdalenostBarev(barvaDopadu(stopa, f, k), klidDopadu[k]!) > prah;
-    vsechnyBehy = vsechnyBehy.flatMap((b) => rozdelPodleDopadu(b, dopadSviti));
-  }
+  // Pruh mine radek dopadu driv, nez dosedne na klavesy, takze detekovany cas
+  // predbiha skutecny uder. Posun je konstantni a nemeni delky, jen zacatky.
+  const odstup = geometrie.hornihrana - geometrie.radekDopadu;
+  const zpozdeni =
+    (nastaveni.korigujZpozdeni ?? VYCHOZI.korigujZpozdeni) && Number.isFinite(rychlostPadu)
+      ? odstup / rychlostPadu / stopa.fps
+      : 0;
 
-  // Barvy a jistota jednotlivych behu.
-  const popis = vsechnyBehy.map((b) => {
+  const nalezene = behy(sviti, stopa.pocetSnimku, n, minSnimku, spojMezeru);
+
+  const popis = nalezene.map((b) => {
     const barvy: Barva[] = [];
-    let soucetOdchylky = 0;
+    let soucet = 0;
     for (let f = b.od; f <= b.do; f++) {
-      barvy.push(barvaKlavesy(stopa, f, b.klavesa));
-      soucetOdchylky += odch[f * n + b.klavesa]!;
+      barvy.push(barva(stopa, 'dopad', f, b.klavesa));
+      soucet += odch[f * n + b.klavesa]!;
     }
-    const barva = medianBarev(barvy);
     const delka = b.do - b.od + 1;
-    return { beh: b, barva, jistota: Math.min(1, soucetOdchylky / delka / Math.max(prah, 1e-6) / 3) };
+    return {
+      beh: b,
+      barva: medianBarev(barvy),
+      jistota: Math.min(1, soucet / delka / Math.max(prah, 1e-6) / 3),
+    };
   });
 
   let odstinyRukou: { levy: number; pravy: number } | null = null;
-  if (nastaveni.rozdeliRuce ?? VYCHOZI.rozdeliRuce) {
-    const vzorky = popis
-      .filter((p) => sytost(p.barva) > 0.25)
-      .map((p) => ({ odstin: odstin(p.barva), midi: stopa.midi[p.beh.klavesa]! }));
-    odstinyRukou = shlukyRukou(vzorky);
+  if (nastaveni.ruceZBarvy ?? VYCHOZI.ruceZBarvy) {
+    odstinyRukou = shlukyRukou(
+      popis
+        .filter((p) => sytost(p.barva) > 0.25)
+        .map((p) => ({ odstin: odstin(p.barva), midi: stopa.midi[p.beh.klavesa]! })),
+    );
   }
 
   const udalosti: Udalost[] = popis.map((p) => {
@@ -242,8 +289,8 @@ export function detekujUdalosti(stopa: Stopa, nastaveni: NastaveniDetekce = {}):
     }
     return {
       midi: stopa.midi[p.beh.klavesa]!,
-      start: p.beh.od / stopa.fps,
-      konec: (p.beh.do + 1) / stopa.fps,
+      start: p.beh.od / stopa.fps + zpozdeni,
+      konec: (p.beh.do + 1) / stopa.fps + zpozdeni,
       ruka,
       barva: p.barva,
       jistota: p.jistota,
@@ -251,20 +298,20 @@ export function detekujUdalosti(stopa: Stopa, nastaveni: NastaveniDetekce = {}):
   });
 
   udalosti.sort((a, b) => a.start - b.start || a.midi - b.midi);
-  return { udalosti, prah, klid, odstinyRukou };
+  return { udalosti, prah, rychlostPadu, zpozdeni, odstinyRukou };
 }
 
-/** Zaloha, kdyz video obe ruce nerozlisuje barvou: deli se podle vysky tonu. */
+/** Zaloha, kdyz nelze urcit ruku ani barvou, ani polohou: deli se podle vysky. */
 export function rozdelPodleVysky(udalosti: Udalost[], delicBod: number): void {
   for (const u of udalosti) {
     if (u.ruka === 'neznama') u.ruka = u.midi < delicBod ? 'leva' : 'prava';
   }
 }
 
-/** Delici bod mezi rukama: mezera v rozlozeni vysek nejbliz malemu c. */
+/** Delici bod mezi rukama: vyska, ktera rozdeli noty co nejvyrovnaneji u c1. */
 export function odhadniDelicBod(udalosti: readonly Udalost[]): number {
   if (udalosti.length === 0) return 60;
-  const vysky = udalosti.map((u) => u.midi).sort((a, b) => a - b);
+  const vysky = udalosti.map((u) => u.midi);
   let nejlepsi = 60;
   let nejlepsiSkore = -Infinity;
   for (let kandidat = 48; kandidat <= 72; kandidat++) {

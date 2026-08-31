@@ -73,7 +73,7 @@ export function ctiSyroveSnimky(
 ): Promise<number> {
   return new Promise((splnit, odmitnout) => {
     const proces = spawn(FFMPEG, argumenty, { windowsHide: true });
-    let zbytek = Buffer.alloc(0);
+    let zbytek: Buffer<ArrayBufferLike> = Buffer.alloc(0);
     let index = 0;
     let chyby = '';
 

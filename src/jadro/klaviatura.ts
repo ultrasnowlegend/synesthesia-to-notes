@@ -8,6 +8,8 @@ export interface NastaveniKlaviatury {
   dolniHrana?: number;
   /** Rucni prepis MIDI cisla nejlevejsi bile klavesy. */
   prvniMidi?: number;
+  /** Odstup druheho radku nad klaviaturou, jako podil vysky obrazu. */
+  odstupVyssiho?: number;
 }
 
 /** Poloton bileho tonu v ramci oktavy: C D E F G A H. */
@@ -225,7 +227,7 @@ export function najdiKlaviaturu(
     const midi = midiBileho(prvniMidi, posun, i);
     midiBile.push(midi);
     const u = bile[i]!;
-    klavesy.push({ midi, cerna: false, x1: u.x1, x2: u.x2, stred: u.stred });
+    klavesy.push({ midi, cerna: false, x1: u.x1, x2: u.x2, stred: u.stred, vx1: u.x1, vx2: u.x2 });
   }
 
   for (const c of cerne) {
@@ -234,12 +236,23 @@ export function najdiKlaviaturu(
     // Cernou pripustime jen tam, kde ji vzor klaviatury opravdu ceka; jinak
     // by tenka delici cara mezi E a F vyrobila neexistujici klavesu.
     if (!NASLEDUJE_CERNA[(posun + index) % 7]) continue;
-    klavesy.push({ midi: midiBile[index]! + 1, cerna: true, x1: c.x1, x2: c.x2, stred: c.stred });
+    klavesy.push({
+      midi: midiBile[index]! + 1,
+      cerna: true,
+      x1: c.x1,
+      x2: c.x2,
+      stred: c.stred,
+      vx1: c.x1,
+      vx2: c.x2,
+    });
   }
 
   klavesy.sort((a, b) => a.midi - b.midi);
+  urciVyhradniRozsahy(klavesy);
 
   const odsazeniDopadu = Math.max(2, Math.round((pas.dolniHrana - pas.hornihrana) * 0.06));
+  const radekDopadu = Math.max(0, pas.hornihrana - odsazeniDopadu);
+  const odstupVyssiho = Math.round(obraz.vyska * (nastaveni.odstupVyssiho ?? 0.06));
   return {
     sirkaObrazu: obraz.sirka,
     vyskaObrazu: obraz.vyska,
@@ -247,12 +260,81 @@ export function najdiKlaviaturu(
     dolniHrana: pas.dolniHrana,
     radekBilych: pas.radekBilych,
     radekCernych: pas.radekCernych,
-    radekDopadu: Math.max(0, pas.hornihrana - odsazeniDopadu),
+    radekDopadu,
+    radekVyssi: Math.max(0, radekDopadu - Math.max(12, odstupVyssiho)),
     klavesy,
   };
 }
 
-/** Radky, ktere staci z videa cist, aby sel odectit stav vsech klaves. */
+/**
+ * Radky, ktere se ctou z kazdeho snimku. Kolem kazde zony jsou tri sousedni
+ * radky, aby jednotliva vadna radka nebo artefakt komprese nerozhodily prumer.
+ */
 export function potrebneRadky(g: GeometrieKlaviatury): number[] {
-  return [...new Set([g.radekCernych, g.radekBilych, g.radekDopadu])].sort((a, b) => a - b);
+  const zony = [g.radekVyssi, g.radekDopadu, g.radekCernych, g.radekBilych];
+  const radky = new Set<number>();
+  for (const stred of zony) {
+    for (const posun of [-2, 0, 2]) {
+      radky.add(Math.max(0, Math.min(g.vyskaObrazu - 1, stred + posun)));
+    }
+  }
+  return [...radky].sort((a, b) => a - b);
+}
+
+/** Ke kazde zone indexy do pole vracenych radku. */
+export function zonyRadku(g: GeometrieKlaviatury): {
+  vyssi: number[];
+  dopad: number[];
+  cerne: number[];
+  bile: number[];
+} {
+  const radky = potrebneRadky(g);
+  const indexy = (stred: number): number[] =>
+    [-2, 0, 2]
+      .map((p) => radky.indexOf(Math.max(0, Math.min(g.vyskaObrazu - 1, stred + p))))
+      .filter((i) => i >= 0);
+  return {
+    vyssi: indexy(g.radekVyssi),
+    dopad: indexy(g.radekDopadu),
+    cerne: indexy(g.radekCernych),
+    bile: indexy(g.radekBilych),
+  };
+}
+
+/**
+ * Ke kazde klavese doplni pruh, ktery nesdili s zadnou jinou. Cerna klavesa lezi
+ * v obraze uvnitr sirky obou sousednich bilych, takze pruh bile klavesy prekryje
+ * i sloupec cerne; kdyby se vzorkovala cela sirka, kazdy ton na bile klavese by
+ * vyrobil falesny ton na sousedni cerne.
+ */
+function urciVyhradniRozsahy(klavesy: Klavesa[]): void {
+  const cerne = klavesy.filter((k) => k.cerna);
+  for (const k of klavesy) {
+    if (k.cerna) {
+      k.vx1 = k.x1;
+      k.vx2 = k.x2;
+      continue;
+    }
+    let segmenty: [number, number][] = [[k.x1, k.x2]];
+    for (const c of cerne) {
+      const dalsi: [number, number][] = [];
+      for (const [a, b] of segmenty) {
+        if (c.x2 < a || c.x1 > b) {
+          dalsi.push([a, b]);
+          continue;
+        }
+        if (c.x1 > a) dalsi.push([a, c.x1 - 1]);
+        if (c.x2 < b) dalsi.push([c.x2 + 1, b]);
+      }
+      segmenty = dalsi;
+    }
+    if (segmenty.length === 0) {
+      k.vx1 = k.x1;
+      k.vx2 = k.x2;
+      continue;
+    }
+    const nejsirsi = segmenty.reduce((n, s) => (s[1] - s[0] > n[1] - n[0] ? s : n));
+    k.vx1 = nejsirsi[0];
+    k.vx2 = nejsirsi[1];
+  }
 }
