@@ -1,6 +1,8 @@
 import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } from 'electron';
-import { writeFile } from 'node:fs/promises';
-import { basename, extname } from 'node:path';
+import { randomBytes } from 'node:crypto';
+import { rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { basename, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { zapisMidi } from '../../src/jadro/midi.js';
@@ -255,9 +257,15 @@ async function ulozPdf(cesta: string): Promise<void> {
     .strana svg { width:100%; height:100% }
   </style>${strany.map((s) => `<div class="strana">${s}</div>`).join('')}`;
 
-  const tiskarna = new BrowserWindow({ show: false, webPreferences: { offscreen: true } });
+  // Stranka se nacita ze souboru, ne z data: URL. Vysazene noty maji stovky
+  // kilobajtu SVG na stranu a takova URL prekroci limit delky, ktery Chromium
+  // pripousti — skonci to na ERR_INVALID_URL.
+  const docasna = join(tmpdir(), `syn2noty-tisk-${randomBytes(6).toString('hex')}.html`);
+  await writeFile(docasna, html, 'utf8');
+
+  const tiskarna = new BrowserWindow({ show: false });
   try {
-    await tiskarna.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+    await tiskarna.loadFile(docasna);
     const pdf = await tiskarna.webContents.printToPDF({
       pageSize: 'A4',
       printBackground: true,
@@ -266,6 +274,7 @@ async function ulozPdf(cesta: string): Promise<void> {
     await writeFile(cesta, pdf);
   } finally {
     tiskarna.destroy();
+    await rm(docasna, { force: true });
   }
 }
 
