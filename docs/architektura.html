@@ -1,0 +1,850 @@
+<title>Z videa zpět do not</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+:root {
+  --pozadi: #E7E9EC;
+  --plocha: #FAFBFC;
+  --plocha2: #F0F2F5;
+  --inkoust: #171A1F;
+  --tlumene: #5A626E;
+  --linka: #C7CED6;
+  --linka2: #DDE2E8;
+  --akcent: #A85F00;
+  --akcent-slabe: #F3E4CE;
+  --leva: #16705F;
+  --prava: #A85F00;
+  --pozor: #A6332A;
+  --bila-klavesa: #FFFFFF;
+  --cerna-klavesa: #2A2F37;
+}
+:root:not([data-theme="light"]) {
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --pozadi: #0E1116;
+    --plocha: #171B22;
+    --plocha2: #1E232B;
+    --inkoust: #E3E7ED;
+    --tlumene: #949DAA;
+    --linka: #2C333D;
+    --linka2: #232931;
+    --akcent: #F0A93A;
+    --akcent-slabe: #3A2C15;
+    --leva: #3FB8A3;
+    --prava: #F0A93A;
+    --pozor: #F0806E;
+    --bila-klavesa: #D9DDE3;
+    --cerna-klavesa: #10141A;
+  }
+}
+:root[data-theme="dark"] {
+  --pozadi: #0E1116;
+  --plocha: #171B22;
+  --plocha2: #1E232B;
+  --inkoust: #E3E7ED;
+  --tlumene: #949DAA;
+  --linka: #2C333D;
+  --linka2: #232931;
+  --akcent: #F0A93A;
+  --akcent-slabe: #3A2C15;
+  --leva: #3FB8A3;
+  --prava: #F0A93A;
+  --pozor: #F0806E;
+  --bila-klavesa: #D9DDE3;
+  --cerna-klavesa: #10141A;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--pozadi);
+  color: var(--inkoust);
+  font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+.stranka {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 4.5rem) clamp(1.1rem, 4vw, 2.5rem) 6rem;
+}
+.text { max-width: 68ch; }
+
+h1, h2, h3, .eyebrow, .stav, nav, figcaption, th, .znacka {
+  font-family: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+}
+h1 {
+  font-size: clamp(2.15rem, 5.2vw, 3.35rem);
+  font-weight: 800;
+  letter-spacing: -0.028em;
+  line-height: 1.03;
+  text-wrap: balance;
+  margin: 0 0 1rem;
+}
+h2 {
+  font-size: clamp(1.35rem, 2.6vw, 1.72rem);
+  font-weight: 700;
+  letter-spacing: -0.017em;
+  line-height: 1.15;
+  text-wrap: balance;
+  margin: 0 0 0.85rem;
+}
+h3 {
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  margin: 2rem 0 0.5rem;
+}
+p { margin: 0 0 1.05rem; }
+a { color: var(--akcent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--akcent); outline-offset: 3px; border-radius: 3px; }
+
+.eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--akcent);
+  margin: 0 0 0.7rem;
+}
+.perex {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: var(--inkoust);
+  max-width: 60ch;
+}
+.stav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tlumene);
+  border: 1px solid var(--linka);
+  border-radius: 100px;
+  padding: 0.32rem 0.8rem;
+  margin-bottom: 1.8rem;
+}
+.stav::before {
+  content: "";
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--akcent);
+}
+
+hr.del {
+  border: 0;
+  border-top: 1px solid var(--linka);
+  margin: 3.4rem 0 2.4rem;
+}
+
+section { margin-bottom: 0.5rem; }
+
+nav.obsah {
+  border: 1px solid var(--linka);
+  border-radius: 10px;
+  background: var(--plocha);
+  padding: 1.1rem 1.3rem;
+  margin: 2.2rem 0 0;
+  max-width: 68ch;
+}
+nav.obsah ol {
+  margin: 0; padding: 0; list-style: none;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.35rem 1.4rem;
+  font-size: 0.9rem;
+}
+nav.obsah a { color: var(--inkoust); text-decoration: none; border-bottom: 1px solid var(--linka); }
+nav.obsah a:hover { color: var(--akcent); border-bottom-color: var(--akcent); }
+
+figure {
+  margin: 2rem 0 2.4rem;
+  border: 1px solid var(--linka);
+  border-radius: 12px;
+  background: var(--plocha);
+  overflow: hidden;
+}
+.ramec { overflow-x: auto; padding: 1.4rem 1.4rem 0.6rem; }
+figure svg { display: block; width: 100%; min-width: 620px; height: auto; }
+figcaption {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--tlumene);
+  padding: 0.9rem 1.4rem 1.15rem;
+  border-top: 1px solid var(--linka2);
+  background: var(--plocha2);
+}
+figcaption b { color: var(--inkoust); font-weight: 600; }
+
+/* Prvky diagramů */
+.d-box { fill: var(--plocha2); stroke: var(--linka); stroke-width: 1.4; }
+.d-box-akc { fill: var(--akcent-slabe); stroke: var(--akcent); stroke-width: 1.6; }
+.d-box-tec { fill: none; stroke: var(--linka); stroke-width: 1.4; stroke-dasharray: 5 4; }
+.d-lbl { fill: var(--inkoust); font-family: "Bricolage Grotesque", sans-serif; font-size: 12.5px; font-weight: 700; }
+.d-sub { fill: var(--tlumene); font-family: "JetBrains Mono", monospace; font-size: 10px; }
+.d-cara { stroke: var(--tlumene); stroke-width: 1.4; fill: none; }
+.d-cara-tec { stroke: var(--tlumene); stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; }
+.d-akc { stroke: var(--akcent); stroke-width: 1.6; fill: none; }
+.d-pop { fill: var(--tlumene); font-family: "JetBrains Mono", monospace; font-size: 10px; }
+.d-pop-akc { fill: var(--akcent); font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 600; }
+.d-lane { fill: var(--tlumene); font-family: "Bricolage Grotesque", sans-serif; font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em; }
+.d-hrot { fill: var(--tlumene); }
+.d-hrot-akc { fill: var(--akcent); }
+.d-bila { fill: var(--bila-klavesa); stroke: var(--linka); stroke-width: 1; }
+.d-cerna { fill: var(--cerna-klavesa); }
+.d-osa { stroke: var(--linka); stroke-width: 1; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 68ch;
+  font-size: 0.92rem;
+  margin: 1.3rem 0 1.6rem;
+}
+th, td { text-align: left; padding: 0.55rem 0.9rem 0.55rem 0; border-bottom: 1px solid var(--linka2); }
+th { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tlumene); font-weight: 700; }
+td.cislo { font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; text-align: right; padding-right: 0; }
+tr.zvyrazneno td { color: var(--akcent); font-weight: 600; }
+
+code, pre { font-family: "JetBrains Mono", ui-monospace, monospace; }
+code { font-size: 0.87em; background: var(--plocha2); border: 1px solid var(--linka2); border-radius: 4px; padding: 0.08em 0.35em; }
+pre {
+  background: var(--plocha);
+  border: 1px solid var(--linka);
+  border-radius: 10px;
+  padding: 1.1rem 1.3rem;
+  overflow-x: auto;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: var(--inkoust);
+  max-width: 68ch;
+}
+pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+pre .k { color: var(--tlumene); }
+
+ul.body { max-width: 68ch; padding-left: 1.15rem; margin: 0 0 1.1rem; }
+ul.body li { margin-bottom: 0.5rem; }
+
+.karty { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.9rem; margin: 1.4rem 0 1.8rem; }
+.karta { border: 1px solid var(--linka); border-radius: 10px; background: var(--plocha); padding: 1rem 1.1rem; }
+.karta h3 { margin: 0 0 0.35rem; font-size: 0.95rem; }
+.karta p { margin: 0; font-size: 0.9rem; color: var(--tlumene); line-height: 1.5; }
+.karta .znacka { font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: var(--akcent); display: block; margin-bottom: 0.4rem; }
+.karta.hotovo .znacka { color: var(--leva); }
+.karta.pozor .znacka { color: var(--pozor); }
+
+.otazky { border-left: 3px solid var(--akcent); padding: 0.2rem 0 0.2rem 1.15rem; max-width: 66ch; margin: 1.5rem 0 0; }
+.otazky li { margin-bottom: 0.6rem; }
+</style>
+
+<div class="stranka">
+
+<header>
+  <p class="eyebrow">Návrh aplikace · synesthesia-to-notes</p>
+  <h1>Z videa zpět do not</h1>
+  <p class="perex">Nahrávka improvizace s padajícími pruhy v sobě už noty obsahuje — jen v obraze místo v zápisu. Tenhle dokument popisuje, jak je odtud dostat ven a proč zrovna takhle.</p>
+  <p class="stav">Návrh k odsouhlasení · jádro rozepsané</p>
+
+  <nav class="obsah" aria-label="Obsah">
+    <ol>
+      <li><a href="#princip">Proč obraz, ne zvuk</a></li>
+      <li><a href="#tok">Celkový tok</a></li>
+      <li><a href="#cteni">Co se z obrazu čte</a></li>
+      <li><a href="#vyska">Určení výšky tónu</a></li>
+      <li><a href="#nota">Z barvy na notu</a></li>
+      <li><a href="#rytmus">Rytmus a výstupy</a></li>
+      <li><a href="#vrstvy">Vrstvy a nezávislost</a></li>
+      <li><a href="#repo">Rozvržení repozitáře</a></li>
+      <li><a href="#plan">Plán po etapách</a></li>
+      <li><a href="#rizika">Rizika a otázky</a></li>
+    </ol>
+  </nav>
+</header>
+
+<hr class="del">
+
+<section id="princip">
+  <p class="eyebrow">Východisko</p>
+  <h2>Proč obraz, a zvuk až druhý</h2>
+  <div class="text">
+    <p>Přepis klavíru ze zvuku je dodnes nespolehlivý: souzvuky se překrývají, alikvótní tóny vypadají jako další noty, doznívání se plete s držením klávesy. Tvoje videa ale nesou informaci, kterou žádný zvukový přepis nemá — <b>je v nich vidět, která klávesa je stisknutá.</b> Výška tónu tedy není odhad, je to odečet.</p>
+    <p>Proto je obraz primární signál a zvuk pomocný. Zvuk má v celém řetězci dvě konkrétní role: zpřesnit čas úderu pod rozlišení snímkové frekvence (30 fps je krok 33 ms, což je na rychlé pasáže hrubé) a posloužit jako kontrola, když si obraz není jistý — třeba u oktávového posunu oříznuté klaviatury.</p>
+  </div>
+</section>
+
+<hr class="del">
+
+<section id="tok">
+  <p class="eyebrow">Krok 1–3</p>
+  <h2>Video se čte dvakrát, a podruhé skoro vůbec</h2>
+  <div class="text">
+    <p>První průchod je kalibrace: pár desítek snímků z celé délky, medián po pixelech, a z výsledného „klidového“ obrazu se odečte, kde na obrazovce leží která klávesa. Druhý průchod jede celé video, ale ffmpeg z něj posílá jen devět pixelových řádků z každého snímku.</p>
+  </div>
+
+  <figure>
+    <div class="ramec">
+      <svg viewBox="0 0 756 300" role="img" aria-label="Diagram dvou průchodů videem: kalibrační průchod odvodí geometrii klaviatury, hlavní průchod čte jen devět řádků a vytváří stopu barev">
+        <defs>
+          <marker id="hrot1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="d-hrot"></path>
+          </marker>
+        </defs>
+
+        <text x="190" y="22" class="d-lane">PRŮCHOD 1 — KALIBRACE, JEDNOU</text>
+        <text x="190" y="200" class="d-lane">PRŮCHOD 2 — CELÉ VIDEO, JEDNÍM TAHEM</text>
+
+        <rect x="16" y="112" width="112" height="64" rx="7" class="d-box"></rect>
+        <text x="72" y="139" class="d-lbl" text-anchor="middle">video.mp4</text>
+        <text x="72" y="156" class="d-sub" text-anchor="middle">1080p · 30 fps</text>
+
+        <path d="M128,132 C158,132 158,58 184,58" class="d-cara" marker-end="url(#hrot1)"></path>
+        <path d="M128,156 C158,156 158,234 184,234" class="d-cara" marker-end="url(#hrot1)"></path>
+
+        <rect x="190" y="32" width="156" height="52" rx="7" class="d-box"></rect>
+        <text x="268" y="55" class="d-lbl" text-anchor="middle">ffmpeg -ss × 40</text>
+        <text x="268" y="72" class="d-sub" text-anchor="middle">snímky z celé délky</text>
+
+        <path d="M346,58 L376,58" class="d-cara" marker-end="url(#hrot1)"></path>
+
+        <rect x="380" y="32" width="146" height="52" rx="7" class="d-box"></rect>
+        <text x="453" y="55" class="d-lbl" text-anchor="middle">medián po pixelech</text>
+        <text x="453" y="72" class="d-sub" text-anchor="middle">klaviatura bez not</text>
+
+        <path d="M526,58 L556,58" class="d-cara" marker-end="url(#hrot1)"></path>
+
+        <rect x="560" y="32" width="180" height="52" rx="7" class="d-box-akc"></rect>
+        <text x="650" y="55" class="d-lbl" text-anchor="middle">geometrie klaviatury</text>
+        <text x="650" y="72" class="d-sub" text-anchor="middle">88 kláves → rozsah x</text>
+
+        <path d="M650,86 L650,146 L268,146 L268,204" class="d-akc" marker-end="url(#hrot1)"></path>
+        <path d="M453,146 L453,204" class="d-akc" marker-end="url(#hrot1)"></path>
+        <text x="640" y="140" class="d-pop-akc" text-anchor="end">které řádky číst · kde je která klávesa</text>
+
+        <rect x="190" y="208" width="156" height="52" rx="7" class="d-box"></rect>
+        <text x="268" y="231" class="d-lbl" text-anchor="middle">ffmpeg, jeden běh</text>
+        <text x="268" y="248" class="d-sub" text-anchor="middle">9 řádků ze snímku</text>
+
+        <path d="M346,234 L376,234" class="d-cara" marker-end="url(#hrot1)"></path>
+
+        <rect x="380" y="208" width="146" height="52" rx="7" class="d-box"></rect>
+        <text x="453" y="231" class="d-lbl" text-anchor="middle">průměr na klávesu</text>
+        <text x="453" y="248" class="d-sub" text-anchor="middle">88 × RGB / snímek</text>
+
+        <path d="M526,234 L556,234" class="d-cara" marker-end="url(#hrot1)"></path>
+
+        <rect x="560" y="208" width="180" height="52" rx="7" class="d-box-akc"></rect>
+        <text x="650" y="231" class="d-lbl" text-anchor="middle">stopa barev</text>
+        <text x="650" y="248" class="d-sub" text-anchor="middle">≈ 5 MB, uloží se na disk</text>
+      </svg>
+    </div>
+    <figcaption><b>Obrázek 1.</b> Kalibrace běží nad mediánem několika desítek snímků — každá klávesa je většinu videa nestisknutá, takže medián ukáže holou klaviaturu i u nahrávky, kde nikdy není ticho. Hledat snímek s pauzou tedy není potřeba.</figcaption>
+  </figure>
+
+  <div class="text">
+    <p>Ten druhý průchod je jádro celého návrhu. Kdybychom si tahali celé snímky, pět minut nahrávky znamená desítky gigabajtů dat, které projdou pamětí. Když z ffmpegu necháme vylézt jen devět řádků a hned je zprůměrujeme na klávesy, zbyde <b>stopa barev</b> — tabulka „snímek × klávesa → RGB“, kterou lze uložit na disk a znovu použít.</p>
+    <p>Tohle není optimalizace pro optimalizaci. Znamená to, že ladění prahů, dělení rukou, tempa i kvantizace běží nad pěti megabajty a je okamžité — video se dekóduje jen jednou za život projektu.</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Co by se přenášelo</th><th class="cislo">Na snímek</th><th class="cislo">5 minut / 30 fps</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>celé snímky 1920 × 1080</td><td class="cislo">6,2 MB</td><td class="cislo">56 GB</td></tr>
+      <tr><td>pás klaviatury (200 řádků)</td><td class="cislo">1,2 MB</td><td class="cislo">10 GB</td></tr>
+      <tr><td>9 vybraných řádků</td><td class="cislo">52 kB</td><td class="cislo">466 MB</td></tr>
+      <tr class="zvyrazneno"><td>stopa barev (88 kláves × 2 zóny)</td><td class="cislo">528 B</td><td class="cislo">4,8 MB</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<hr class="del">
+
+<section id="cteni">
+  <p class="eyebrow">Krok 2 podrobně</p>
+  <h2>Co se z obrazu vlastně čte</h2>
+  <div class="text">
+    <p>Z každého snímku potřebujeme tři informace a každá má v obraze svoje místo. Tělo bílé klávesy pod černými řekne, jestli svítí bílá. Horní část klaviatury řekne totéž o černých. A tenký pruh těsně nad klaviaturou zachytí okamžik, kdy dopadne nový pruh — což je jediný způsob, jak rozeznat dva rychle opakované tóny, mezi kterými klávesa nestihne zhasnout.</p>
+  </div>
+
+  <figure>
+    <div class="ramec">
+      <svg viewBox="0 0 900 434" role="img" aria-label="Řez snímkem videa: nahoře padající pruhy, dole klaviatura, a tři skupiny po třech pixelových řádcích, které se jako jediné z videa přenášejí">
+        <defs>
+          <marker id="hrot2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="d-hrot"></path>
+          </marker>
+        </defs>
+
+        <rect x="20" y="16" width="700" height="396" rx="6" class="d-box-tec"></rect>
+        <text x="34" y="38" class="d-sub">snímek videa · 1920 × 1080 px</text>
+
+        <rect x="228" y="196" width="40" height="100" rx="6" fill="var(--prava)"></rect>
+        <rect x="451" y="120" width="26" height="72" rx="5" fill="var(--leva)"></rect>
+        <rect x="516" y="56" width="40" height="52" rx="6" fill="var(--prava)" opacity="0.42"></rect>
+        <rect x="355" y="72" width="26" height="40" rx="5" fill="var(--leva)" opacity="0.42"></rect>
+        <text x="592" y="86" class="d-pop">padající pruhy</text>
+
+        <g>
+          <rect x="32" y="300" width="47" height="110" class="d-bila"></rect>
+          <rect x="80" y="300" width="47" height="110" class="d-bila"></rect>
+          <rect x="128" y="300" width="47" height="110" class="d-bila"></rect>
+          <rect x="176" y="300" width="47" height="110" class="d-bila"></rect>
+          <rect x="224" y="300" width="47" height="110" fill="var(--prava)" opacity="0.75" stroke="var(--akcent)" stroke-width="1"></rect>
+          <rect x="272" y="300" width="47" height="110" class="d-bila"></rect>
+          <rect x="320" y="300" width="47" height="110" class="d-bila"></rect>
+          <rect x="368" y="300" width="47" height="110" class="d-bila"></rect>
+          <rect x="416" y="300" width="47" height="110" class="d-bila"></rect>
+          <rect x="464" y="300" width="47" height="110" class="d-bila"></rect>
+          <rect x="512" y="300" width="47" height="110" class="d-bila"></rect>
+          <rect x="560" y="300" width="47" height="110" class="d-bila"></rect>
+          <rect x="608" y="300" width="47" height="110" class="d-bila"></rect>
+          <rect x="656" y="300" width="47" height="110" class="d-bila"></rect>
+
+          <rect x="67" y="300" width="26" height="66" class="d-cerna"></rect>
+          <rect x="115" y="300" width="26" height="66" class="d-cerna"></rect>
+          <rect x="211" y="300" width="26" height="66" class="d-cerna"></rect>
+          <rect x="259" y="300" width="26" height="66" class="d-cerna"></rect>
+          <rect x="307" y="300" width="26" height="66" class="d-cerna"></rect>
+          <rect x="403" y="300" width="26" height="66" class="d-cerna"></rect>
+          <rect x="451" y="300" width="26" height="66" fill="var(--leva)"></rect>
+          <rect x="547" y="300" width="26" height="66" class="d-cerna"></rect>
+          <rect x="595" y="300" width="26" height="66" class="d-cerna"></rect>
+          <rect x="643" y="300" width="26" height="66" class="d-cerna"></rect>
+        </g>
+
+        <g>
+          <line x1="24" y1="286" x2="716" y2="286" class="d-akc"></line>
+          <line x1="24" y1="290" x2="716" y2="290" class="d-akc"></line>
+          <line x1="24" y1="294" x2="716" y2="294" class="d-akc"></line>
+          <line x1="716" y1="290" x2="756" y2="290" class="d-cara"></line>
+          <text x="762" y="287" class="d-lbl">řádek dopadu</text>
+          <text x="762" y="303" class="d-sub">3 řádky · nový pruh</text>
+        </g>
+        <g>
+          <line x1="24" y1="318" x2="716" y2="318" class="d-akc"></line>
+          <line x1="24" y1="322" x2="716" y2="322" class="d-akc"></line>
+          <line x1="24" y1="326" x2="716" y2="326" class="d-akc"></line>
+          <line x1="716" y1="322" x2="756" y2="322" class="d-cara"></line>
+          <text x="762" y="319" class="d-lbl">černé klávesy</text>
+          <text x="762" y="335" class="d-sub">3 řádky · nad bílými</text>
+        </g>
+        <g>
+          <line x1="24" y1="388" x2="716" y2="388" class="d-akc"></line>
+          <line x1="24" y1="392" x2="716" y2="392" class="d-akc"></line>
+          <line x1="24" y1="396" x2="716" y2="396" class="d-akc"></line>
+          <line x1="716" y1="392" x2="756" y2="392" class="d-cara"></line>
+          <text x="762" y="389" class="d-lbl">bílé klávesy</text>
+          <text x="762" y="405" class="d-sub">3 řádky · pod černými</text>
+        </g>
+
+        <path d="M248,296 L248,306" class="d-cara" marker-end="url(#hrot2)"></path>
+        <text x="34" y="264" class="d-pop-akc">z 1080 řádků snímku se přenáší 9</text>
+      </svg>
+    </div>
+    <figcaption><b>Obrázek 2.</b> Devět řádků, tři zóny. Barva se v každé zóně průměruje přes šířku klávesy, takže i úzká černá klávesa má na 1080p desítky pixelů — jednotlivý vadný pixel ani komprese detekci nerozhodí.</figcaption>
+  </figure>
+</section>
+
+<hr class="del">
+
+<section id="vyska">
+  <p class="eyebrow">Kalibrace</p>
+  <h2>Vzor černých kláves určuje absolutní výšku</h2>
+  <div class="text">
+    <p>Nalézt hrany kláves je snadné — jsou to světlé pruhy oddělené tenkými tmavými linkami. Těžší je vědět, <b>která</b> z nich je které C. Odpověď dává rozložení černých kláves: střídají se ve skupinách po dvou a po třech, a to nepravidelné střídání je v celé klaviatuře jen jedno. Jakmile najdeme skupinu tří, bílá klávesa nalevo od její první černé je F. Tím je určena třída všech ostatních kláves.</p>
+    <p>Zbývá oktáva. Tu určí počet nalezených bílých kláves: 52 bílých začínajících u A je standardních 88 kláves a A0 je MIDI 21. U ořezaných rozsahů se sáhne po nejbližší obvyklé velikosti, a když ani ta nesedí, oktáva se posune tak, aby střed klaviatury padl k malému c. Tenhle poslední odhad je jediné místo v kalibraci, kde se dá minout — proto půjde v aplikaci přepsat jedním posuvníkem a ověřit zvukem.</p>
+  </div>
+
+  <figure>
+    <div class="ramec">
+      <svg viewBox="0 0 820 254" role="img" aria-label="Klaviatura s vyznačenými skupinami dvou a tří černých kláves, které jednoznačně určují, která bílá klávesa je C">
+        <defs>
+          <marker id="hrot3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="d-hrot"></path>
+          </marker>
+        </defs>
+
+        <path d="M68,34 L68,26 L148,26 L148,34" class="d-akc"></path>
+        <text x="108" y="19" class="d-lbl" text-anchor="middle" fill="var(--akcent)">2</text>
+        <path d="M224,34 L224,26 L356,26 L356,34" class="d-akc"></path>
+        <text x="290" y="19" class="d-lbl" text-anchor="middle" fill="var(--akcent)">3</text>
+        <path d="M432,34 L432,26 L512,26 L512,34" class="d-akc"></path>
+        <text x="472" y="19" class="d-lbl" text-anchor="middle" fill="var(--akcent)">2</text>
+        <path d="M588,34 L588,26 L720,26 L720,34" class="d-akc"></path>
+        <text x="654" y="19" class="d-lbl" text-anchor="middle" fill="var(--akcent)">3</text>
+
+        <g>
+          <rect x="30" y="40" width="51" height="120" class="d-bila"></rect>
+          <rect x="82" y="40" width="51" height="120" class="d-bila"></rect>
+          <rect x="134" y="40" width="51" height="120" class="d-bila"></rect>
+          <rect x="186" y="40" width="51" height="120" class="d-bila"></rect>
+          <rect x="238" y="40" width="51" height="120" class="d-bila"></rect>
+          <rect x="290" y="40" width="51" height="120" class="d-bila"></rect>
+          <rect x="342" y="40" width="51" height="120" class="d-bila"></rect>
+          <rect x="394" y="40" width="51" height="120" class="d-bila"></rect>
+          <rect x="446" y="40" width="51" height="120" class="d-bila"></rect>
+          <rect x="498" y="40" width="51" height="120" class="d-bila"></rect>
+          <rect x="550" y="40" width="51" height="120" class="d-bila"></rect>
+          <rect x="602" y="40" width="51" height="120" class="d-bila"></rect>
+          <rect x="654" y="40" width="51" height="120" class="d-bila"></rect>
+          <rect x="706" y="40" width="51" height="120" class="d-bila"></rect>
+
+          <rect x="68" y="40" width="28" height="76" class="d-cerna"></rect>
+          <rect x="120" y="40" width="28" height="76" class="d-cerna"></rect>
+          <rect x="224" y="40" width="28" height="76" class="d-cerna"></rect>
+          <rect x="276" y="40" width="28" height="76" class="d-cerna"></rect>
+          <rect x="328" y="40" width="28" height="76" class="d-cerna"></rect>
+          <rect x="432" y="40" width="28" height="76" class="d-cerna"></rect>
+          <rect x="484" y="40" width="28" height="76" class="d-cerna"></rect>
+          <rect x="588" y="40" width="28" height="76" class="d-cerna"></rect>
+          <rect x="640" y="40" width="28" height="76" class="d-cerna"></rect>
+          <rect x="692" y="40" width="28" height="76" class="d-cerna"></rect>
+        </g>
+
+        <text x="55" y="180" class="d-lbl" text-anchor="middle" fill="var(--akcent)">C</text>
+        <text x="107" y="180" class="d-lbl" text-anchor="middle">D</text>
+        <text x="159" y="180" class="d-lbl" text-anchor="middle">E</text>
+        <text x="211" y="180" class="d-lbl" text-anchor="middle">F</text>
+        <text x="263" y="180" class="d-lbl" text-anchor="middle">G</text>
+        <text x="315" y="180" class="d-lbl" text-anchor="middle">A</text>
+        <text x="367" y="180" class="d-lbl" text-anchor="middle">H</text>
+        <text x="419" y="180" class="d-lbl" text-anchor="middle" fill="var(--akcent)">C</text>
+        <text x="471" y="180" class="d-lbl" text-anchor="middle">D</text>
+        <text x="523" y="180" class="d-lbl" text-anchor="middle">E</text>
+        <text x="575" y="180" class="d-lbl" text-anchor="middle">F</text>
+        <text x="627" y="180" class="d-lbl" text-anchor="middle">G</text>
+        <text x="679" y="180" class="d-lbl" text-anchor="middle">A</text>
+        <text x="731" y="180" class="d-lbl" text-anchor="middle">H</text>
+
+        <path d="M226,206 L212,190" class="d-cara" marker-end="url(#hrot3)"></path>
+        <text x="232" y="212" class="d-pop">bílá vlevo od skupiny tří = F, tím je určeno i C</text>
+        <text x="30" y="240" class="d-sub">počet bílých kláves pak dourčí oktávu · 52 bílých od A → 88 kláves, A0 = MIDI 21</text>
+      </svg>
+    </div>
+    <figcaption><b>Obrázek 3.</b> Vzor 2–3 je jediné místo v obraze, kde je absolutní výška tónu zakódovaná bez ohledu na výřez. Proto se kalibrace opírá o něj, a ne o polohu klaviatury v obraze.</figcaption>
+  </figure>
+</section>
+
+<hr class="del">
+
+<section id="nota">
+  <p class="eyebrow">Krok 4</p>
+  <h2>Z barvy klávesy na notu</h2>
+  <div class="text">
+    <p>Pro každou klávesu spočítáme její klidovou barvu jako medián přes celé video a pak sledujeme odchylku od ní. Práh mezi „klid“ a „svítí“ se nenastavuje konstantou — hledá ho Otsuova metoda nad rozdělením všech odchylek, takže se sám přizpůsobí vzhledu konkrétního videa.</p>
+    <p>Vzdálenost barev přitom není obyčejná vzdálenost v RGB. Stisk klávesy mění hlavně sytost a odstín, kdežto stín ruky nad klaviaturou mění hlavně jas. Jas má proto v metrice výrazně menší váhu — jinak by každý stín vypadal jako zahraná nota.</p>
+  </div>
+
+  <figure>
+    <div class="ramec">
+      <svg viewBox="0 0 820 316" role="img" aria-label="Časová osa jedné klávesy: odchylka barvy proti prahu, z ní odvozené běhy, spojení krátké mezery a rozdělení drženého tónu podle řádku dopadu">
+        <defs>
+          <marker id="hrot4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="d-hrot"></path>
+          </marker>
+        </defs>
+
+        <text x="20" y="22" class="d-lane">ODCHYLKA BARVY JEDNÉ KLÁVESY</text>
+
+        <line x1="60" y1="150" x2="790" y2="150" class="d-osa"></line>
+        <line x1="60" y1="40" x2="60" y2="150" class="d-osa"></line>
+        <line x1="60" y1="100" x2="790" y2="100" class="d-cara-tec"></line>
+        <text x="790" y="96" class="d-pop-akc" text-anchor="end">práh (Otsu)</text>
+
+        <polyline points="60,146 158,146 164,58 300,58 306,146 320,146 322,112 330,112 332,146 340,146 346,58 400,58 404,124 412,124 416,58 468,58 474,146 496,146 502,58 758,58 764,146 790,146"
+                  fill="none" stroke="var(--akcent)" stroke-width="2"></polyline>
+
+        <text x="20" y="196" class="d-lane">SUROVÉ BĚHY</text>
+        <rect x="164" y="204" width="142" height="14" rx="3" fill="var(--tlumene)"></rect>
+        <rect x="322" y="204" width="10" height="14" rx="3" fill="var(--pozor)"></rect>
+        <rect x="346" y="204" width="58" height="14" rx="3" fill="var(--tlumene)"></rect>
+        <rect x="416" y="204" width="58" height="14" rx="3" fill="var(--tlumene)"></rect>
+        <rect x="502" y="204" width="262" height="14" rx="3" fill="var(--tlumene)"></rect>
+        <text x="337" y="236" class="d-pop" fill="var(--pozor)">kratší než 2 snímky → šum, zahodí se</text>
+        <path d="M330,230 L328,222" class="d-cara" stroke="var(--pozor)" marker-end="url(#hrot4)"></path>
+        <text x="410" y="196" class="d-pop">mezera 1 snímek → spojit</text>
+
+        <text x="20" y="266" class="d-lane">ŘÁDEK DOPADU</text>
+        <rect x="164" y="252" width="142" height="10" rx="2" fill="var(--tlumene)" opacity="0.45"></rect>
+        <rect x="346" y="252" width="128" height="10" rx="2" fill="var(--tlumene)" opacity="0.45"></rect>
+        <rect x="502" y="252" width="118" height="10" rx="2" fill="var(--tlumene)" opacity="0.45"></rect>
+        <rect x="646" y="252" width="118" height="10" rx="2" fill="var(--tlumene)" opacity="0.45"></rect>
+        <path d="M633,244 L633,236" class="d-akc" marker-end="url(#hrot4)"></path>
+        <text x="640" y="240" class="d-pop-akc">nový pruh → dělicí bod</text>
+
+        <text x="20" y="300" class="d-lane">VÝSLEDNÉ NOTY</text>
+        <rect x="164" y="288" width="142" height="16" rx="3" fill="var(--prava)"></rect>
+        <rect x="346" y="288" width="128" height="16" rx="3" fill="var(--prava)"></rect>
+        <rect x="502" y="288" width="131" height="16" rx="3" fill="var(--leva)"></rect>
+        <rect x="637" y="288" width="127" height="16" rx="3" fill="var(--leva)"></rect>
+      </svg>
+    </div>
+    <figcaption><b>Obrázek 4.</b> Tři úpravy nad surovým prahováním: krátké záblesky se zahodí, jednosnímkové mezery z vyhlazování hran se spojí, a držená klávesa se rozdělí tam, kde nad ní dopadl nový pruh. Bez posledního kroku by se rychle opakovaný tón četl jako jedna dlouhá nota.</figcaption>
+  </figure>
+
+  <div class="text">
+    <p>Barva pruhu navíc nese ruku. Odstíny všech nalezených not se rozdělí na dva shluky metodou k-means na kruhu odstínu; shluk s nižšími tóny je levá ruka. Když jsou si výsledné odstíny blízko, video ruce nerozlišuje a rozdělení se udělá až podle výšky tónu. <b>Z toho pak přímo vyplývají dvě osnovy v zápisu</b> — houslový a basový klíč nejsou odhad, ale to, co jsi při hraní opravdu dělal.</p>
+  </div>
+</section>
+
+<hr class="del">
+
+<section id="rytmus">
+  <p class="eyebrow">Krok 5–6</p>
+  <h2>Rytmus je to nejtěžší, ne noty</h2>
+  <div class="text">
+    <p>V tuhle chvíli máme přesný seznam „tón, od, do“ v sekundách. Do not chybí poslední překlad: kde jsou doby a takty. U improvizace, která záměrně dýchá, na tohle neexistuje bezchybná automatika — a je poctivější to říct dopředu než předstírat opak.</p>
+    <p>Tempo se odhaduje hřebenovým filtrem: pro každé kandidátní BPM se sečtou jednotkové vektory fází všech úderů. Když údery na mřížku sedí, fáze se sečtou; když ne, vzájemně se vyruší. Úhel výsledku rovnou dává i posun mřížky. Výsledek se váží preferencí obvyklých temp, jinak by skoro vždy vyhrál dvojnásobek nebo polovina.</p>
+    <p><b>Odhad je ale vždycky jen návrh.</b> V aplikaci uvidíš BPM, posun a hustotu dělení jako tři ovladače a pod nimi živý náhled not — přetáhneš, zápis se překreslí. Právě proto je stopa barev na disku: tenhle cyklus musí být okamžitý.</p>
+  </div>
+
+  <figure>
+    <div class="ramec">
+      <svg viewBox="0 0 880 264" role="img" aria-label="Řetězec od událostí přes odhad tempa a kvantizaci k výstupům MIDI, MusicXML a PDF, se zvukem jako vedlejším vstupem">
+        <defs>
+          <marker id="hrot5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="d-hrot"></path>
+          </marker>
+        </defs>
+
+        <rect x="16" y="40" width="150" height="54" rx="7" class="d-box"></rect>
+        <text x="91" y="64" class="d-lbl" text-anchor="middle">události</text>
+        <text x="91" y="81" class="d-sub" text-anchor="middle">tón, od, do (s)</text>
+
+        <path d="M166,67 L192,67" class="d-cara" marker-end="url(#hrot5)"></path>
+
+        <rect x="196" y="40" width="160" height="54" rx="7" class="d-box"></rect>
+        <text x="276" y="64" class="d-lbl" text-anchor="middle">odhad tempa</text>
+        <text x="276" y="81" class="d-sub" text-anchor="middle">hřebenový filtr</text>
+
+        <path d="M356,67 L378,67" class="d-cara" marker-end="url(#hrot5)"></path>
+
+        <rect x="382" y="40" width="160" height="54" rx="7" class="d-box"></rect>
+        <text x="462" y="64" class="d-lbl" text-anchor="middle">kvantizace</text>
+        <text x="462" y="81" class="d-sub" text-anchor="middle">mřížka 1/16, trioly</text>
+
+        <path d="M542,67 L564,67" class="d-cara" marker-end="url(#hrot5)"></path>
+
+        <rect x="568" y="40" width="122" height="54" rx="7" class="d-box"></rect>
+        <text x="629" y="64" class="d-lbl" text-anchor="middle">tónina</text>
+        <text x="629" y="81" class="d-sub" text-anchor="middle">Krumhansl</text>
+
+        <path d="M690,67 C706,67 706,30 722,30" class="d-cara" marker-end="url(#hrot5)"></path>
+        <path d="M690,67 L722,67" class="d-cara" marker-end="url(#hrot5)"></path>
+        <path d="M690,67 C706,67 706,104 722,104" class="d-cara" marker-end="url(#hrot5)"></path>
+
+        <rect x="726" y="12" width="136" height="36" rx="6" class="d-box-akc"></rect>
+        <text x="794" y="35" class="d-lbl" text-anchor="middle">MIDI</text>
+        <rect x="726" y="49" width="136" height="36" rx="6" class="d-box-akc"></rect>
+        <text x="794" y="72" class="d-lbl" text-anchor="middle">MusicXML</text>
+        <rect x="726" y="86" width="136" height="36" rx="6" class="d-box-akc"></rect>
+        <text x="794" y="109" class="d-lbl" text-anchor="middle">PDF (Verovio)</text>
+
+        <text x="16" y="164" class="d-lane">ZVUK — SEKUNDÁRNÍ SIGNÁL</text>
+
+        <rect x="16" y="176" width="176" height="50" rx="7" class="d-box-tec"></rect>
+        <text x="104" y="198" class="d-lbl" text-anchor="middle">ffmpeg → PCM</text>
+        <text x="104" y="214" class="d-sub" text-anchor="middle">22 kHz mono</text>
+
+        <path d="M192,201 L218,201" class="d-cara-tec" marker-end="url(#hrot5)"></path>
+
+        <rect x="222" y="176" width="176" height="50" rx="7" class="d-box-tec"></rect>
+        <text x="310" y="198" class="d-lbl" text-anchor="middle">spektrální onsety</text>
+        <text x="310" y="214" class="d-sub" text-anchor="middle">přesnost ~5 ms</text>
+
+        <path d="M270,176 C270,140 91,140 91,98" class="d-cara-tec" marker-end="url(#hrot5)"></path>
+        <text x="120" y="132" class="d-pop">zpřesnění času úderu</text>
+        <path d="M350,176 C350,140 276,140 276,98" class="d-cara-tec" marker-end="url(#hrot5)"></path>
+        <text x="360" y="160" class="d-pop">kotva mřížky</text>
+      </svg>
+    </div>
+    <figcaption><b>Obrázek 5.</b> Zvuk nikdy neurčuje, <i>která</i> nota zazněla — jen upřesňuje <i>kdy</i>. Když se z audia onsety nepodaří najít, celý řetězec funguje dál, jen s přesností jednoho snímku.</figcaption>
+  </figure>
+
+  <div class="karty">
+    <div class="karta">
+      <span class="znacka">Výstup</span>
+      <h3>MIDI</h3>
+      <p>Vlastní zápis standardního SMF, dvě stopy podle rukou. Nejpřesnější mezikrok — otevřeš v MuseScore nebo DAW a doladíš.</p>
+    </div>
+    <div class="karta">
+      <span class="znacka">Výstup</span>
+      <h3>MusicXML</h3>
+      <p>Dvě osnovy, předznamenání, ligatury přes taktovou čáru, akordy. Čte to MuseScore, Sibelius i Finale.</p>
+    </div>
+    <div class="karta">
+      <span class="znacka">Výstup</span>
+      <h3>PDF a náhled</h3>
+      <p>Verovio sází MusicXML do SVG — stejný kód dělá náhled v aplikaci i tisknutelné PDF. Žádný druhý sázecí engine.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="del">
+
+<section id="vrstvy">
+  <p class="eyebrow">Struktura</p>
+  <h2>Nezávislá aplikace, SuperSystem jen navěšený</h2>
+  <div class="text">
+    <p>Aplikace stojí sama: má vlastní repozitář, vlastní Electron okno a vlastní CLI. SuperSystem se na ni může napojit, ale jen jedním směrem — spustí CLI a přečte si JSON. Uvnitř synesthesia-to-notes neexistuje jediný import ze SuperSystemu, takže smazání jednoho projektu nerozbije druhý.</p>
+    <p>Uvnitř aplikace míří všechny závislosti dovnitř, k jádru. Jádro je čistá logika: nezná Node, ffmpeg, Electron ani React, a dostává data parametrem. Je to stejný princip, na kterém stojí <code>dnesek.ts</code> v SuperSystemu, a ze stejného důvodu — takhle jde jádro otestovat a časem přenést jinam.</p>
+  </div>
+
+  <figure>
+    <div class="ramec">
+      <svg viewBox="0 0 700 336" role="img" aria-label="Vrstvy aplikace: CLI a Electron aplikace stojí nad vrstvou videa a zvuku, ta nad čistým jádrem; SuperSystem se napojuje zvenčí pouze spuštěním CLI">
+        <defs>
+          <marker id="hrot6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="d-hrot"></path>
+          </marker>
+        </defs>
+
+        <line x1="392" y1="16" x2="392" y2="300" class="d-cara-tec"></line>
+        <text x="20" y="26" class="d-lane">SAMOSTATNÁ APLIKACE</text>
+        <text x="410" y="26" class="d-lane">VOLITELNÉ NAPOJENÍ</text>
+
+        <rect x="20" y="40" width="140" height="60" rx="7" class="d-box"></rect>
+        <text x="90" y="66" class="d-lbl" text-anchor="middle">CLI</text>
+        <text x="90" y="83" class="d-sub" text-anchor="middle">syn2noty</text>
+
+        <rect x="176" y="40" width="150" height="60" rx="7" class="d-box"></rect>
+        <text x="251" y="66" class="d-lbl" text-anchor="middle">Electron + React</text>
+        <text x="251" y="83" class="d-sub" text-anchor="middle">kalibrace, náhled</text>
+
+        <rect x="430" y="40" width="250" height="60" rx="7" class="d-box-tec"></rect>
+        <text x="555" y="66" class="d-lbl" text-anchor="middle">modul v SuperSystemu</text>
+        <text x="555" y="83" class="d-sub" text-anchor="middle">spustí binárku, přečte JSON</text>
+
+        <path d="M430,70 L330,70" class="d-cara" marker-end="url(#hrot6)"></path>
+        <text x="380" y="118" class="d-pop" text-anchor="middle">jen tímto směrem</text>
+
+        <path d="M90,100 L90,142" class="d-cara" marker-end="url(#hrot6)"></path>
+        <path d="M251,100 L251,142" class="d-cara" marker-end="url(#hrot6)"></path>
+
+        <rect x="20" y="146" width="306" height="60" rx="7" class="d-box"></rect>
+        <text x="173" y="172" class="d-lbl" text-anchor="middle">src/video · src/audio</text>
+        <text x="173" y="189" class="d-sub" text-anchor="middle">ffmpeg, souborový systém, Node</text>
+
+        <path d="M173,206 L173,244" class="d-cara" marker-end="url(#hrot6)"></path>
+
+        <rect x="20" y="248" width="306" height="64" rx="7" class="d-box-akc"></rect>
+        <text x="173" y="275" class="d-lbl" text-anchor="middle">src/jadro</text>
+        <text x="173" y="292" class="d-sub" text-anchor="middle">čistá logika · bez Node, Electronu i Reactu</text>
+
+        <text x="430" y="150" class="d-pop">Ze synesthesia-to-notes</text>
+        <text x="430" y="166" class="d-pop">nevede do SuperSystemu</text>
+        <text x="430" y="182" class="d-pop">žádný import.</text>
+      </svg>
+    </div>
+    <figcaption><b>Obrázek 6.</b> Hranice je záměrně tenká: kontrakt mezi projekty je jeden příkaz a jeden JSON. Kdyby SuperSystem měl aplikaci importovat jako knihovnu, svázaly by se jim verze Electronu a Reactu — a to je přesně to, čemu se tímhle vyhýbáme.</figcaption>
+  </figure>
+</section>
+
+<hr class="del">
+
+<section id="repo">
+  <p class="eyebrow">Kód</p>
+  <h2>Rozvržení repozitáře</h2>
+<pre><code>synesthesia-to-notes/
+├─ src/
+│  ├─ jadro/            <span class="k">čistá logika, nula závislostí</span>
+│  │  ├─ typy.ts        <span class="k">Klavesa, Udalost, Nota, Tempo, Prepis</span>
+│  │  ├─ barvy.ts       <span class="k">metrika barev s potlačeným jasem</span>
+│  │  ├─ obraz.ts       <span class="k">rgb24, medián snímků, Otsu, úseky</span>
+│  │  ├─ klaviatura.ts  <span class="k">geometrie a přiřazení výšek</span>
+│  │  ├─ stopa.ts       <span class="k">formát stopy barev</span>
+│  │  ├─ detekce.ts     <span class="k">běhy, ruce, opakované tóny</span>
+│  │  ├─ tempo.ts       <span class="k">hřebenový filtr, kvantizace</span>
+│  │  ├─ tonina.ts      <span class="k">předznamenání, zápis tónů</span>
+│  │  ├─ notace.ts      <span class="k">MusicXML, dvě osnovy</span>
+│  │  └─ midi.ts        <span class="k">standardní MIDI soubor</span>
+│  ├─ video/            <span class="k">ffmpeg, ffprobe, čtení řádků</span>
+│  ├─ audio/            <span class="k">PCM, spektrální onsety</span>
+│  ├─ cli.ts            <span class="k">syn2noty video.mp4 -o slozka/</span>
+│  └─ app/              <span class="k">Electron + React</span>
+├─ test/                <span class="k">node --test nad jádrem</span>
+└─ docs/                <span class="k">tenhle dokument</span></code></pre>
+</section>
+
+<hr class="del">
+
+<section id="plan">
+  <p class="eyebrow">Postup</p>
+  <h2>Plán po etapách</h2>
+  <div class="karty">
+    <div class="karta hotovo">
+      <span class="znacka">Rozepsané</span>
+      <h3>1 · Jádro</h3>
+      <p>Geometrie, detekce, tempo, tónina, MusicXML, MIDI. Napsané, zatím nepřeložené ani neotestované.</p>
+    </div>
+    <div class="karta">
+      <span class="znacka">Další</span>
+      <h3>2 · ffmpeg a CLI</h3>
+      <p>Čtení řádků, stopa barev na disk, <code>syn2noty video.mp4</code> až po MIDI a MusicXML. Konec téhle etapy je první reálný přepis.</p>
+    </div>
+    <div class="karta">
+      <span class="znacka">Pak</span>
+      <h3>3 · Kalibrace na ukázce</h3>
+      <p>Doladění prahů proti tvému videu, ruční přepis klaviatury a oktávy, kontrolní obrázek s vyznačenými klávesami.</p>
+    </div>
+    <div class="karta">
+      <span class="znacka">Pak</span>
+      <h3>4 · Aplikace</h3>
+      <p>Electron okno: přetáhneš video, opravíš kalibraci, hýbeš BPM a mřížkou, vedle běží náhled not.</p>
+    </div>
+    <div class="karta">
+      <span class="znacka">Pak</span>
+      <h3>5 · Sazba a PDF</h3>
+      <p>Verovio pro náhled i export. Tady se rozhodne, jestli je zápis opravdu čitelný, nebo jen technicky správný.</p>
+    </div>
+    <div class="karta">
+      <span class="znacka">Nakonec</span>
+      <h3>6 · Napojení</h3>
+      <p>Modul v SuperSystemu, který spustí CLI a ukáže výsledek. Až úplně na konci, aby nesvazoval návrh.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="del">
+
+<section id="rizika">
+  <p class="eyebrow">Poctivě</p>
+  <h2>Kde to může spadnout</h2>
+  <div class="karty">
+    <div class="karta pozor">
+      <span class="znacka">Největší riziko</span>
+      <h3>Ruce přes klaviaturu</h3>
+      <p>Návrh počítá s vykreslenou klaviaturou. Jestli je ve videu tvůj skutečný klavír a efekty jsou přimalované přes něj, budou prsty klávesy zakrývat a bude se muset číst hlavně řádek dopadu.</p>
+    </div>
+    <div class="karta pozor">
+      <span class="znacka">Riziko</span>
+      <h3>Rubato</h3>
+      <p>Improvizace, která záměrně dýchá, nemá jedno BPM. Pojistkou je ruční tempo a možnost nechat zápis bez taktů, jen s reálnými délkami.</p>
+    </div>
+    <div class="karta pozor">
+      <span class="znacka">Riziko</span>
+      <h3>Světlé pozadí</h3>
+      <p>Hledání klaviatury předpokládá tmavou plochu nad ní. U světlého motivu bude potřeba ruční zadání horní a dolní hrany — proto je v kalibraci od začátku ruční přepis.</p>
+    </div>
+    <div class="karta">
+      <span class="znacka">Omezení</span>
+      <h3>Pedál</h3>
+      <p>Ve videu není vidět. Délky not proto odpovídají držení klávesy, ne doznění tónu. To je pro čitelný zápis spíš výhoda.</p>
+    </div>
+  </div>
+
+  <h3>Co od tebe potřebuju, než budu pokračovat</h3>
+  <ol class="otazky">
+    <li><b>Ukázkové video</b>, ideálně 20–30 sekund. Bez něj jsou všechny prahy jen kvalifikovaný odhad a kalibrace se nedá ověřit.</li>
+    <li><b>Je klaviatura ve videu vykreslená, nebo je to tvůj skutečný klavír s efekty navrch?</b> Tohle je jediná otázka, která může změnit celý krok čtení obrazu.</li>
+    <li><b>Mají levá a pravá ruka různou barvu?</b> Pokud ano, dvě osnovy vyjdou zadarmo a přesně.</li>
+  </ol>
+</section>
+
+</div>

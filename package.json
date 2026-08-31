@@ -1,0 +1,29 @@
+{
+  "name": "synesthesia-to-notes",
+  "version": "0.1.0",
+  "description": "Prevod videa s Synthesia-style efekty zpet na notovy zapis",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./jadro": "./dist/jadro/index.js"
+  },
+  "bin": {
+    "syn2noty": "dist/cli.js"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "watch": "tsc -b --watch",
+    "test": "node --test dist/test/",
+    "cli": "node dist/cli.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "typescript": "~6.0.2"
+  }
+}
