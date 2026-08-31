@@ -92,6 +92,7 @@ function obdelnik(
   x2: number,
   y2: number,
   barva: Barva,
+  kryti = 1,
 ): void {
   const odX = Math.max(0, Math.round(x1));
   const doX = Math.min(sirka - 1, Math.round(x2));
@@ -100,9 +101,10 @@ function obdelnik(
   for (let y = odY; y <= doY; y++) {
     let i = (y * sirka + odX) * 3;
     for (let x = odX; x <= doX; x++) {
-      data[i++] = barva.r;
-      data[i++] = barva.g;
-      data[i++] = barva.b;
+      data[i] = data[i]! + (barva.r - data[i]!) * kryti;
+      data[i + 1] = data[i + 1]! + (barva.g - data[i + 1]!) * kryti;
+      data[i + 2] = data[i + 2]! + (barva.b - data[i + 2]!) * kryti;
+      i += 3;
     }
   }
 }
@@ -116,7 +118,8 @@ function polohaRuky(s: Scena, klavesy: readonly KlavesaSceny[], ruka: 'leva' | '
     const stred = stredy.get(n.midi);
     if (stred !== undefined) posledni = stred;
   }
-  return posledni;
+  // Mirny pohyb navic: staticka ruka by v medianu nezmizela.
+  return posledni + Math.sin(cas * 1.7) * 12;
 }
 
 export function vykresliSnimek(s: Scena, cas: number): Uint8Array {
@@ -152,6 +155,23 @@ export function vykresliSnimek(s: Scena, cas: number): Uint8Array {
     const odX = k.cerna || !vlevo ? k.x1 + 1 : vlevo.x2 + 1;
     const doX = k.cerna || !vpravo ? k.x2 - 1 : vpravo.x1 - 1;
     obdelnik(data, s.sirka, s.vyska, odX, vrsek, doX, Math.min(spodek, s.hornihrana - 1), barva);
+
+    // Pruh se na klaviature nezastavi — pokracuje pres ni a mizi. Prave tenhle
+    // presah pres staticke klavesy je hlavni signal detekce.
+    const hloubka = (s.dolniHrana - s.hornihrana) * 0.55;
+    if (spodek >= s.hornihrana) {
+      obdelnik(
+        data,
+        s.sirka,
+        s.vyska,
+        odX,
+        Math.max(vrsek, s.hornihrana),
+        doX,
+        Math.min(spodek, s.hornihrana + hloubka),
+        barva,
+        0.8,
+      );
+    }
   }
 
   for (const ruka of ['leva', 'prava'] as const) {

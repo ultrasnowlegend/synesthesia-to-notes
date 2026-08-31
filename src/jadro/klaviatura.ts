@@ -1,4 +1,4 @@
-import { jas, sytost } from './barvy.js';
+import { jas } from './barvy.js';
 import { median, otsu, radek, useky, type Obraz, type Usek } from './obraz.js';
 import type { GeometrieKlaviatury, Klavesa } from './typy.js';
 
@@ -35,6 +35,7 @@ interface PasKlaviatury {
   dolniHrana: number;
   radekBilych: number;
   radekCernych: number;
+  radekDopadu: number;
 }
 
 /** MIDI cislo i-te bile klavesy zleva. */
@@ -45,9 +46,13 @@ function midiBileho(prvniMidi: number, posun: number, i: number): number {
 }
 
 /**
- * Najde vodorovny pas, ve kterem lezi klaviatura. Vychazi z toho, ze klaviatura
- * je jediny sirsi pas obrazu, kde vetsinu sirky zabiraji svetle nesyte pixely;
- * plocha nad ni, kudy padaji pruhy, ma tmave pozadi.
+ * Najde vodorovny pas, ve kterem lezi klaviatura. Vychazi z toho, ze telo bilych
+ * klaves je nejsvetlejsi souvisla plocha v dolni casti obrazu a ze nad i pod
+ * klaviaturou je vyrazne tmavsi okoli.
+ *
+ * Hranice svetla se neurcuje konstantou, ale Otsuovou metodou nad celym
+ * snimkem: pri teplem nasviceni jsou bile klavesy jantarove a mnohem tmavsi,
+ * nez by cekala jakakoli pevna mez.
  */
 function najdiPas(obraz: Obraz, nastaveni: NastaveniKlaviatury): PasKlaviatury {
   const { sirka, vyska } = obraz;
@@ -55,20 +60,32 @@ function najdiPas(obraz: Obraz, nastaveni: NastaveniKlaviatury): PasKlaviatury {
   const podilTmavych = new Array<number>(vyska).fill(0);
   const krok = Math.max(1, Math.floor(sirka / 400));
 
+  const vzorekJasu: number[] = [];
+  for (let y = 0; y < vyska; y += 3) {
+    for (let x = 0; x < sirka; x += krok) {
+      const i = (y * sirka + x) * 3;
+      vzorekJasu.push(jas({ r: obraz.data[i]!, g: obraz.data[i + 1]!, b: obraz.data[i + 2]! }));
+    }
+  }
+  const prahJasu = Math.min(170, Math.max(45, otsu(vzorekJasu)));
+
   for (let y = 0; y < vyska; y++) {
     let svetle = 0;
-    let tmave = 0;
     let pocet = 0;
     for (let x = 0; x < sirka; x += krok) {
       const i = (y * sirka + x) * 3;
       const b = { r: obraz.data[i]!, g: obraz.data[i + 1]!, b: obraz.data[i + 2]! };
-      if (jas(b) > 140 && sytost(b) < 0.3) svetle++;
-      if (jas(b) < 80) tmave++;
+      if (jas(b) > prahJasu) svetle++;
       pocet++;
     }
     podilSvetlych[y] = svetle / pocet;
-    podilTmavych[y] = tmave / pocet;
+    podilTmavych[y] = 1 - svetle / pocet;
   }
+
+  const odRadku = Math.floor(vyska * 0.35);
+  let maxSvetlosti = 0;
+  for (let y = odRadku; y < vyska; y++) maxSvetlosti = Math.max(maxSvetlosti, podilSvetlych[y]!);
+  const prah = Math.max(0.2, maxSvetlosti * 0.3);
 
   let hornihrana: number;
   let dolniHrana: number;
@@ -77,25 +94,30 @@ function najdiPas(obraz: Obraz, nastaveni: NastaveniKlaviatury): PasKlaviatury {
     hornihrana = nastaveni.hornihrana;
     dolniHrana = nastaveni.dolniHrana;
   } else {
-    // Kotva: nejsvetlejsi radek v dolni casti obrazu je vzdy telo bilych klaves.
-    let kotva = -1;
-    let max = 0;
-    for (let y = Math.floor(vyska * 0.4); y < vyska; y++) {
-      if (podilSvetlych[y]! > max) {
-        max = podilSvetlych[y]!;
-        kotva = y;
-      }
-    }
-    if (kotva < 0 || max < 0.3) {
+    if (maxSvetlosti < 0.3) {
       throw new Error(
         'Klaviaturu se nepodarilo najit automaticky. Zadej hornihranu a dolniHranu rucne.',
       );
     }
-    const prah = Math.max(0.22, max * 0.42);
-    hornihrana = kotva;
-    while (hornihrana > 0 && podilSvetlych[hornihrana - 1]! > prah) hornihrana--;
-    dolniHrana = kotva;
-    while (dolniHrana < vyska - 1 && podilSvetlych[dolniHrana + 1]! > prah) dolniHrana++;
+
+    // Nejdelsi souvisly usek svetlych radku, ne rozrustani od nejsvetlejsiho:
+    // v pruhu tesne nad klaviaturou byva jasna zar dopadu, ktera je svetlejsi
+    // nez klavesy same, a rozrustani od ni by se zastavilo hned pod ni,
+    // u nejsirsi casti cernych klaves.
+    hornihrana = 0;
+    dolniHrana = 0;
+    let od = -1;
+    for (let y = odRadku; y <= vyska; y++) {
+      const nad = y < vyska && podilSvetlych[y]! > prah;
+      if (nad && od < 0) od = y;
+      if (!nad && od >= 0) {
+        if (y - od > dolniHrana - hornihrana) {
+          hornihrana = od;
+          dolniHrana = y - 1;
+        }
+        od = -1;
+      }
+    }
   }
 
   const vysk = dolniHrana - hornihrana;
@@ -111,19 +133,25 @@ function najdiPas(obraz: Obraz, nastaveni: NastaveniKlaviatury): PasKlaviatury {
     }
   }
 
-  // Cerne klavesy tam, kde je jejich podil nejvyssi, tedy v horni tretine pasu.
-  let radekCernych = hornihrana + Math.round(vysk * 0.25);
-  let nejTmavsi = -1;
-  const odY = hornihrana + Math.round(vysk * 0.1);
-  const doY = hornihrana + Math.round(vysk * 0.45);
-  for (let y = odY; y < Math.max(odY + 1, doY); y++) {
-    if (podilTmavych[y]! > nejTmavsi) {
-      nejTmavsi = podilTmavych[y]!;
-      radekCernych = y;
-    }
-  }
+  // Cerne klavesy zabiraji vzdy horni cast klaviatury, takze radek volime pevnym
+  // podilem vysky. Hledani nejtmavsiho radku by sklouzlo nize, kde uz lezi ruce:
+  // v medianu sice vetsinou zmizi, ale kdyz se hraje dlouho na jednom miste,
+  // zbytek ruky by cerne klavesy slepil dohromady.
+  const radekCernych = hornihrana + Math.round(vysk * 0.18);
 
-  return { hornihrana, dolniHrana, radekBilych, radekCernych };
+  // Nad klaviaturou casto lezi jasna zar dopadu, ktera sviti porad; radek pro
+  // detekci pruhu musi byt nad ni, jinak by byl trvale prosvetleny. Preskocime
+  // proto vsechny svetle radky a jeste kus klidneho pasu nad nimi.
+  let klid = 0;
+  let y = hornihrana - 1;
+  while (y > 0 && klid < 5) {
+    klid = podilSvetlych[y]! > prah ? 0 : klid + 1;
+    y--;
+  }
+  const dnoKlidu = y + klid;
+  const radekDopadu = Math.max(0, dnoKlidu - Math.max(2, Math.round(vysk * 0.04)));
+
+  return { hornihrana, dolniHrana, radekBilych, radekCernych, radekDopadu };
 }
 
 /** Odfiltruje useky, ktere jsou proti medianu neumerne uzke nebo siroke. */
@@ -131,6 +159,54 @@ function rozumneUseky(vsechny: Usek[], dolniPomer: number, horniPomer: number): 
   if (vsechny.length === 0) return [];
   const m = median(vsechny.map((u) => u.sirka));
   return vsechny.filter((u) => u.sirka >= m * dolniPomer && u.sirka <= m * horniPomer);
+}
+
+/**
+ * Bile klavesy maji na klaviatuře pravidelnou rozteč, takze misto surovych useku
+ * z obrazu prokladame jejich stredy primkou a klavesy generujeme z ni.
+ *
+ * Bez toho staci jediny stin nebo zbytek ruky v medianu, ktery jednu klavesu
+ * rozpulci nebo zahodi, a vsechny klavesy za nim se posunou o jednu — vzor
+ * cernych klaves pak prestane sedet a polovina cernych se zahodi jako neplatna.
+ * Navic takhle vzniknou i klavesy oriznute okrajem zaberu, ktere by jinak
+ * propadly filtrem sirky.
+ */
+function mrizkaBilych(useky: readonly Usek[], sirka: number): Usek[] {
+  const stredy = useky.map((u) => u.stred).sort((a, b) => a - b);
+  if (stredy.length < 8) return [...useky];
+
+  const rozdily: number[] = [];
+  for (let i = 1; i < stredy.length; i++) rozdily.push(stredy[i]! - stredy[i - 1]!);
+  const hrubyRozestup = median(rozdily);
+  const sousedni = rozdily.filter((d) => d > hrubyRozestup * 0.7 && d < hrubyRozestup * 1.3);
+  const rozestup = sousedni.length >= 4 ? median(sousedni) : hrubyRozestup;
+  if (!(rozestup > 1)) return [...useky];
+
+  // Nejmensi ctverce pres (index, stred); indexy vychazi ze zaokrouhleneho
+  // podilu, takze vypadle klavesy nikoho neposunou.
+  const prvni = stredy[0]!;
+  const indexy = stredy.map((c) => Math.round((c - prvni) / rozestup));
+  const n = stredy.length;
+  const soucetI = indexy.reduce((s, i) => s + i, 0);
+  const soucetC = stredy.reduce((s, c) => s + c, 0);
+  const soucetII = indexy.reduce((s, i) => s + i * i, 0);
+  const soucetIC = indexy.reduce((s, i, k) => s + i * stredy[k]!, 0);
+  const jmenovatel = n * soucetII - soucetI * soucetI;
+  if (jmenovatel === 0) return [...useky];
+  const krok = (n * soucetIC - soucetI * soucetC) / jmenovatel;
+  const posun = (soucetC - krok * soucetI) / n;
+
+  const out: Usek[] = [];
+  const odIndexu = Math.ceil((0 - krok / 2 - posun) / krok);
+  const doIndexu = Math.floor((sirka - 1 + krok / 2 - posun) / krok);
+  for (let i = odIndexu; i <= doIndexu; i++) {
+    const stred = posun + krok * i;
+    const x1 = Math.max(0, Math.round(stred - krok / 2));
+    const x2 = Math.min(sirka - 1, Math.round(stred + krok / 2) - 1);
+    if (x2 - x1 < krok * 0.25) continue;
+    out.push({ x1, x2, sirka: x2 - x1 + 1, stred });
+  }
+  return out;
 }
 
 /**
@@ -195,14 +271,15 @@ export function najdiKlaviaturu(
 
   const bileRadek = radek(obraz, pas.radekBilych).map(jas);
   const prahBile = otsu(bileRadek);
-  const bile = rozumneUseky(
+  const nalezene = rozumneUseky(
     useky(obraz.sirka, (x) => bileRadek[x]! > prahBile),
     0.45,
     1.8,
   );
-  if (bile.length < 7) {
-    throw new Error(`Nalezeno jen ${bile.length} bilych klaves; klaviaturu nelze precist.`);
+  if (nalezene.length < 7) {
+    throw new Error(`Nalezeno jen ${nalezene.length} bilych klaves; klaviaturu nelze precist.`);
   }
+  const bile = mrizkaBilych(nalezene, obraz.sirka);
 
   const cernyRadek = radek(obraz, pas.radekCernych).map(jas);
   const prahCerne = otsu(cernyRadek);
@@ -250,8 +327,8 @@ export function najdiKlaviaturu(
   klavesy.sort((a, b) => a.midi - b.midi);
   urciVyhradniRozsahy(klavesy);
 
-  const odsazeniDopadu = Math.max(2, Math.round((pas.dolniHrana - pas.hornihrana) * 0.06));
-  const radekDopadu = Math.max(0, pas.hornihrana - odsazeniDopadu);
+  const radekDopadu = pas.radekDopadu;
+  const vyskaPasu = pas.dolniHrana - pas.hornihrana;
   const odstupVyssiho = Math.round(obraz.vyska * (nastaveni.odstupVyssiho ?? 0.06));
   return {
     sirkaObrazu: obraz.sirka,
@@ -260,6 +337,8 @@ export function najdiKlaviaturu(
     dolniHrana: pas.dolniHrana,
     radekBilych: pas.radekBilych,
     radekCernych: pas.radekCernych,
+    radekZare: Math.min(obraz.vyska - 1, pas.hornihrana + Math.max(4, Math.round(vyskaPasu * 0.06))),
+    radekHloubky: Math.min(obraz.vyska - 1, pas.hornihrana + Math.max(14, Math.round(vyskaPasu * 0.3))),
     radekDopadu,
     radekVyssi: Math.max(0, radekDopadu - Math.max(12, odstupVyssiho)),
     klavesy,
@@ -271,7 +350,7 @@ export function najdiKlaviaturu(
  * radky, aby jednotliva vadna radka nebo artefakt komprese nerozhodily prumer.
  */
 export function potrebneRadky(g: GeometrieKlaviatury): number[] {
-  const zony = [g.radekVyssi, g.radekDopadu, g.radekCernych, g.radekBilych];
+  const zony = [g.radekDopadu, g.radekZare, g.radekHloubky];
   const radky = new Set<number>();
   for (const stred of zony) {
     for (const posun of [-2, 0, 2]) {
@@ -283,10 +362,9 @@ export function potrebneRadky(g: GeometrieKlaviatury): number[] {
 
 /** Ke kazde zone indexy do pole vracenych radku. */
 export function zonyRadku(g: GeometrieKlaviatury): {
-  vyssi: number[];
   dopad: number[];
-  cerne: number[];
-  bile: number[];
+  zar: number[];
+  hloubka: number[];
 } {
   const radky = potrebneRadky(g);
   const indexy = (stred: number): number[] =>
@@ -294,10 +372,9 @@ export function zonyRadku(g: GeometrieKlaviatury): {
       .map((p) => radky.indexOf(Math.max(0, Math.min(g.vyskaObrazu - 1, stred + p))))
       .filter((i) => i >= 0);
   return {
-    vyssi: indexy(g.radekVyssi),
     dopad: indexy(g.radekDopadu),
-    cerne: indexy(g.radekCernych),
-    bile: indexy(g.radekBilych),
+    zar: indexy(g.radekZare),
+    hloubka: indexy(g.radekHloubky),
   };
 }
 

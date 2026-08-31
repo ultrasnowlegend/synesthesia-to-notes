@@ -117,9 +117,9 @@ export async function postavStopu(
   ].join(';');
 
   const odhad = Math.max(1, Math.ceil(info.delka * info.fps) + 30);
+  const zar: RostouciPole = { data: new Uint8Array(odhad * n * 3), kapacitaSnimku: odhad };
   const dopad: RostouciPole = { data: new Uint8Array(odhad * n * 3), kapacitaSnimku: odhad };
-  const vyssi: RostouciPole = { data: new Uint8Array(odhad * n * 3), kapacitaSnimku: odhad };
-  const klavesy: RostouciPole = { data: new Uint8Array(odhad * n * 3), kapacitaSnimku: odhad };
+  const hloubka: RostouciPole = { data: new Uint8Array(odhad * n * 3), kapacitaSnimku: odhad };
 
   const pocetSnimku = await ctiSyroveSnimky(
     [
@@ -132,15 +132,14 @@ export async function postavStopu(
     ],
     bajtuNaSnimek,
     (data, index) => {
+      zvetsi(zar, index + 1, n * 3);
       zvetsi(dopad, index + 1, n * 3);
-      zvetsi(vyssi, index + 1, n * 3);
-      zvetsi(klavesy, index + 1, n * 3);
+      zvetsi(hloubka, index + 1, n * 3);
       for (let k = 0; k < n; k++) {
         const { x1, x2 } = rozsahy[k]!;
+        zapisBarvu(zar.data, index, k, n, prumerVOblasti(data, info.sirka, zony.zar, x1, x2));
         zapisBarvu(dopad.data, index, k, n, prumerVOblasti(data, info.sirka, zony.dopad, x1, x2));
-        zapisBarvu(vyssi.data, index, k, n, prumerVOblasti(data, info.sirka, zony.vyssi, x1, x2));
-        const zonaTela = geometrie.klavesy[k]!.cerna ? zony.cerne : zony.bile;
-        zapisBarvu(klavesy.data, index, k, n, prumerVOblasti(data, info.sirka, zonaTela, x1, x2));
+        zapisBarvu(hloubka.data, index, k, n, prumerVOblasti(data, info.sirka, zony.hloubka, x1, x2));
       }
     },
   );
@@ -150,9 +149,9 @@ export async function postavStopu(
     fps: info.fps,
     pocetSnimku,
     midi: geometrie.klavesy.map((k) => k.midi),
+    zar: orez(zar),
+    hloubka: orez(hloubka),
     dopad: orez(dopad),
-    vyssi: orez(vyssi),
-    klavesy: orez(klavesy),
   };
 
   const syrovyPas = await readFile(souborPasu);

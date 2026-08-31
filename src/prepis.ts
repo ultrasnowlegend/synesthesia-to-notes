@@ -5,7 +5,9 @@ import {
   type NastaveniDetekce,
 } from './jadro/detekce.js';
 import type { NastaveniKlaviatury } from './jadro/klaviatura.js';
+import { najdiOnsety } from './jadro/onsety.js';
 import { prirazeniPodlePolohy, sledujRuce, type NastaveniRukou } from './jadro/ruce.js';
+import { sladSeZvukem, upresniPodleZvuku, type Sladeni } from './jadro/sladeni.js';
 import type { Stopa } from './jadro/stopa.js';
 import {
   kvantizuj,
@@ -15,6 +17,7 @@ import {
 } from './jadro/tempo.js';
 import { odhadniToninu, type Tonina } from './jadro/tonina.js';
 import type { DrahyRukou, GeometrieKlaviatury, Nota, Tempo, Udalost } from './jadro/typy.js';
+import { nactiVzorky } from './audio/zvuk.js';
 import { nactiInfo, type InfoVidea } from './video/ffmpeg.js';
 import { zkalibruj } from './video/kalibrace.js';
 import { postavStopu, type NastaveniVzorkovani } from './video/vzorkovani.js';
@@ -26,6 +29,8 @@ export interface NastaveniPrepisu {
   ruce?: NastaveniRukou;
   tempo?: NastaveniTempa;
   vzorkuKalibrace?: number;
+  /** Vypnout pouziti zvuku; obraz pak funguje sam, jen s presnosti snimku. */
+  bezZvuku?: boolean;
   /** Nepovinne hlaseni prubehu; CLI i aplikace si ho vykresli po svem. */
   naStav?: (zprava: string) => void;
 }
@@ -42,6 +47,10 @@ export interface VysledekPrepisu {
   delicBod: number;
   /** Rychlost padu pruhu v px/snimek; NaN, kdyz se nepodarilo zmerit. */
   rychlostPadu: number;
+  /** Prah, na kterem detekce nakonec bezela. */
+  prah: number;
+  /** Shoda se zvukem; presnost je zaroven mira duvery v cely prepis. */
+  sladeni: Sladeni;
 }
 
 /**
@@ -84,6 +93,25 @@ export async function prepisVideo(
   const delicBod = odhadniDelicBod(udalosti);
   rozdelPodleVysky(udalosti, delicBod);
 
+  let sladeni: Sladeni = { posun: 0, presnost: 0, pokryti: 0 };
+  if (!nastaveni.bezZvuku) {
+    hlas('porovnavam se zvukem');
+    try {
+      const udery = najdiOnsety(await nactiVzorky(video));
+      sladeni = sladSeZvukem(udalosti, udery);
+      if (sladeni.presnost > 0.5) {
+        upresniPodleZvuku(udalosti, udery, sladeni.posun);
+        udalosti.sort((a, b) => a.start - b.start || a.midi - b.midi);
+      }
+      hlas(
+        `zvuk: ${udery.length} uderu, posun ${Math.round(sladeni.posun * 1000)} ms, ` +
+          `shoda ${Math.round(sladeni.presnost * 100)} %`,
+      );
+    } catch (e) {
+      hlas(`zvuk se nepodarilo zpracovat (${(e as Error).message}); pokracuji bez nej`);
+    }
+  }
+
   hlas('odhaduji tempo');
   const tempo = odhadniTempo(udalosti, nastaveni.tempo ?? {});
   const noty = kvantizuj(udalosti, tempo, nastaveni.tempo ?? {});
@@ -102,5 +130,7 @@ export async function prepisVideo(
     tonina,
     delicBod,
     rychlostPadu: detekce.rychlostPadu,
+    prah: detekce.prah,
+    sladeni,
   };
 }

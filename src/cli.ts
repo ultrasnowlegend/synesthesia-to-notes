@@ -25,6 +25,8 @@ const NAPOVEDA = `syn2noty — prevede video klaviru se synesthesia efekty na no
       --prvni-midi <21>  MIDI cislo nejlevejsi bile klavesy
       --prah <0.12>      prah detekce pruhu, 0..1
       --hrany <a,b>      rucni horni a dolni hrana klaviatury v pixelech
+      --pomer-souseda <1.8>  kolikrat silnejsi soused zahodi klavesu jako preteceni
+      --bez-zvuku        neporovnavat se zvukovou stopou
       --json             vypsat vysledek jako JSON na standardni vystup
       --ticho            nevypisovat prubeh
   -h, --help             tato napoveda
@@ -51,6 +53,8 @@ function zpracujArgumenty(argv: readonly string[]): Prepinace | null {
       case '--deleni': nastaveni.tempo!.deleni = Number(dalsi()); break;
       case '--prah': nastaveni.detekce!.prah = Number(dalsi()); break;
       case '--prvni-midi': nastaveni.klaviatura!.prvniMidi = Number(dalsi()); break;
+      case '--pomer-souseda': nastaveni.detekce!.pomerSouseda = Number(dalsi()); break;
+      case '--bez-zvuku': nastaveni.bezZvuku = true; break;
       case '--json': json = true; break;
       case '--ticho': ticho = true; break;
       case '--takt': {
@@ -124,7 +128,13 @@ async function hlavni(): Promise<number> {
           not: vysledek.noty.length,
           tempo: vysledek.tempo,
           predznamenani: vysledek.tonina.kvinty,
+          prah: Number(vysledek.prah.toFixed(3)),
           rychlostPadu: Number.isFinite(vysledek.rychlostPadu) ? vysledek.rychlostPadu : null,
+          zvuk: {
+            posunMs: Math.round(vysledek.sladeni.posun * 1000),
+            presnost: Number(vysledek.sladeni.presnost.toFixed(2)),
+            pokryti: Number(vysledek.sladeni.pokryti.toFixed(2)),
+          },
         },
         null,
         2,

@@ -10,7 +10,18 @@ export interface NastaveniDetekce {
   minSnimku?: number;
   /** Mezery kratsi nez tolik snimku spojujeme; vznikaji vyhlazovanim hran. */
   spojMezeruSnimku?: number;
-  /** Posunout casy o dobu, kterou pruh potrebuje z radku dopadu ke klavesam. */
+  /**
+   * Kolikrat silnejsi musi byt soused, aby se klavesa zahodila jako preteceni
+   * zare. Rozsvicena klavesa preleva svetlo i na sousedni sloupce, ale vzdy
+   * vyrazne slabeji nez zdroj.
+   */
+  pomerSouseda?: number;
+  /**
+   * Posunout casy o dobu, kterou pruh potrebuje od klavesy k radku zare.
+   * Vychozi je vypnuto: posun je konstantni, takze ho sladeni se zvukem stejne
+   * pohlti, a na realne nahravce se ukazalo, ze zar uvnitr klaviatury se
+   * nechova jako tuhy padajici pruh, takze zmerena rychlost neni spolehliva.
+   */
   korigujZpozdeni?: boolean;
   /** Priradit ruce podle odstinu pruhu, kdyz je video rozlisuje. */
   ruceZBarvy?: boolean;
@@ -19,9 +30,19 @@ export interface NastaveniDetekce {
 const VYCHOZI = {
   minSnimku: 2,
   spojMezeruSnimku: 1,
-  korigujZpozdeni: true,
+  pomerSouseda: 1.8,
+  korigujZpozdeni: false,
   ruceZBarvy: true,
 } as const;
+
+/**
+ * Otsu najde hranici mezi tichem a jakymkoli signalem. Pracovni prah lezi
+ * vyrazne vys: pod nim je jeste pas slabeho preteceni zare ze sousednich
+ * klaves, ktery na skutecnou notu nestaci. Nasobek je vybrany proti nahravce
+ * z realneho klaviru a je to jedina konstanta v cele detekci, kterou muze byt
+ * potreba u jineho vzhledu videa doladit.
+ */
+const NASOBEK_PRAHU = 1.8;
 
 /**
  * Klidova barva kazdeho sloupce = median pres cele video. Pruh kryje dane misto
@@ -110,17 +131,18 @@ function behy(
  */
 export function zmerRychlostPadu(
   stopa: Stopa,
-  geometrie: GeometrieKlaviatury,
+  horni: Vrstva,
+  dolni: Vrstva,
+  rozestup: number,
   prah: number,
-  klidDopadu: readonly Barva[],
-  klidVyssi: readonly Barva[],
+  klidHorni: readonly Barva[],
+  klidDolni: readonly Barva[],
   maxPosun = 90,
 ): number {
   const n = stopa.midi.length;
-  const rozestup = geometrie.radekDopadu - geometrie.radekVyssi;
   if (rozestup <= 0) return NaN;
 
-  const nastupy = (vrstva: 'vyssi' | 'dopad', klid: readonly Barva[]): Uint8Array => {
+  const nastupy = (vrstva: Vrstva, klid: readonly Barva[]): Uint8Array => {
     const out = new Uint8Array(stopa.pocetSnimku * n);
     const predchozi = new Uint8Array(n);
     for (let f = 0; f < stopa.pocetSnimku; f++) {
@@ -133,8 +155,8 @@ export function zmerRychlostPadu(
     return out;
   };
 
-  const nastupVyssi = nastupy('vyssi', klidVyssi);
-  const nastupDopad = nastupy('dopad', klidDopadu);
+  const nastupVyssi = nastupy(horni, klidHorni);
+  const nastupDopad = nastupy(dolni, klidDolni);
 
   let nejlepsiPosun = -1;
   let nejlepsiSkore = 0;
@@ -158,7 +180,7 @@ export function zmerRychlostPadu(
   }
 
   // Bez zretelneho vitezstvi je vysledek jen nejvyssi sum; radeji nic nevracet.
-  if (nejlepsiPosun < 1 || nejlepsiSkore < 6 || nejlepsiSkore < druheSkore * 1.3) return NaN;
+  if (nejlepsiPosun < 1 || nejlepsiSkore < 6 || nejlepsiSkore < druheSkore * 1.12) return NaN;
   return rozestup / nejlepsiPosun;
 }
 
@@ -237,20 +259,42 @@ export function detekujUdalosti(
   const minSnimku = nastaveni.minSnimku ?? VYCHOZI.minSnimku;
   const spojMezeru = nastaveni.spojMezeruSnimku ?? VYCHOZI.spojMezeruSnimku;
 
-  const klidDopadu = klidoveBarvy(stopa, 'dopad');
-  const odch = odchylky(stopa, 'dopad', klidDopadu);
-  const prah = nastaveni.prah ?? odhadniPrah(odch);
-  const sviti = (f: number, k: number): boolean => odch[f * n + k]! > prah;
+  const klidZare = klidoveBarvy(stopa, 'zar');
+  const odch = odchylky(stopa, 'zar', klidZare);
+  const prah = nastaveni.prah ?? Math.max(0.12, odhadniPrah(odch) * NASOBEK_PRAHU);
+  const pomerSouseda = nastaveni.pomerSouseda ?? VYCHOZI.pomerSouseda;
 
-  const klidVyssi = klidoveBarvy(stopa, 'vyssi');
-  const rychlostPadu = zmerRychlostPadu(stopa, geometrie, prah, klidDopadu, klidVyssi);
+  // Rozsvicena klavesa preleva svetlo na sousedni sloupce; preteceni je vzdy
+  // vyrazne slabsi nez zdroj, takze staci porovnat se sousedy.
+  const sviti = (f: number, k: number): boolean => {
+    const v = odch[f * n + k]!;
+    if (v <= prah) return false;
+    const vlevo = k > 0 ? odch[f * n + k - 1]! : 0;
+    const vpravo = k < n - 1 ? odch[f * n + k + 1]! : 0;
+    return Math.max(vlevo, vpravo) <= v * pomerSouseda;
+  };
 
-  // Pruh mine radek dopadu driv, nez dosedne na klavesy, takze detekovany cas
-  // predbiha skutecny uder. Posun je konstantni a nemeni delky, jen zacatky.
-  const odstup = geometrie.hornihrana - geometrie.radekDopadu;
+  // Rychlost merime mezi dvema radky uvnitr klaviatury. Radek nad ni ma za
+  // sebou pohyblive video, takze jeho nabezne hrany jsou z vetsiny sum a
+  // korelace na nem nema zadne zretelne maximum.
+  const klidHloubky = klidoveBarvy(stopa, 'hloubka');
+  const rychlostPadu = zmerRychlostPadu(
+    stopa,
+    'zar',
+    'hloubka',
+    geometrie.radekHloubky - geometrie.radekZare,
+    prah,
+    klidZare,
+    klidHloubky,
+  );
+
+  // Radek zare lezi pod horni hranou klaviatury, takze pruh na nej dorazi az
+  // po tom, co dosedne na klavesy; detekovany cas je o ten kousek opozdeny.
+  // Posun je konstantni a nemeni delky, jen zacatky.
+  const odstup = geometrie.radekZare - geometrie.hornihrana;
   const zpozdeni =
     (nastaveni.korigujZpozdeni ?? VYCHOZI.korigujZpozdeni) && Number.isFinite(rychlostPadu)
-      ? odstup / rychlostPadu / stopa.fps
+      ? -odstup / rychlostPadu / stopa.fps
       : 0;
 
   const nalezene = behy(sviti, stopa.pocetSnimku, n, minSnimku, spojMezeru);
@@ -259,7 +303,7 @@ export function detekujUdalosti(
     const barvy: Barva[] = [];
     let soucet = 0;
     for (let f = b.od; f <= b.do; f++) {
-      barvy.push(barva(stopa, 'dopad', f, b.klavesa));
+      barvy.push(barva(stopa, 'zar', f, b.klavesa));
       soucet += odch[f * n + b.klavesa]!;
     }
     const delka = b.do - b.od + 1;

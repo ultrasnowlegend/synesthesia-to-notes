@@ -35,7 +35,19 @@ export interface GeometrieKlaviatury {
   radekBilych: number;
   /** Y radku, na kterem se vzorkuji cerne klavesy. */
   radekCernych: number;
-  /** Y radku tesne nad klaviaturou; hlavni signal. */
+  /**
+   * Y radku tesne pod horni hranou klaviatury. Hlavni signal: pruh pokracuje
+   * pres klaviaturu a mizi, ale tady uz ma za sebou staticke klavesy misto
+   * pohybliveho videa, takze je proti pozadi jednoznacny.
+   */
+  radekZare: number;
+  /**
+   * Y radku hloubeji v klaviature. Spolu s radkem zare dava rychlost padu:
+   * oba lezi nad statickymi klavesami, takze jejich signal je cisty, kdezto
+   * radky nad klaviaturou maji za sebou pohyblive video.
+   */
+  radekHloubky: number;
+  /** Y radku tesne nad klaviaturou, nad zari dopadu. */
   radekDopadu: number;
   /** Y druheho radku vyse; z casoveho posunu mezi nimi vyjde rychlost padu. */
   radekVyssi: number;

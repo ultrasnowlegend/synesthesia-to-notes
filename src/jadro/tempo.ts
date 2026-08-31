@@ -77,12 +77,46 @@ export function odhadniTempo(udalosti: readonly Udalost[], nastaveni: NastaveniT
 
   const minBpm = nastaveni.minBpm ?? 45;
   const maxBpm = nastaveni.maxBpm ?? 200;
-  let nejlepsi = { bpm: 100, faze: 0, sila: 0, skore: -1 };
-  for (let bpm = minBpm; bpm <= maxBpm; bpm += 0.25) {
-    const perioda = 60 / bpm;
-    const f = hrebenovyFiltr(ons, perioda);
-    const skore = f.sila * prioritaTempa(bpm);
-    if (skore > nejlepsi.skore) nejlepsi = { bpm, faze: f.faze, sila: f.sila, skore };
+  const hledej = (vzorek: readonly number[]): { bpm: number; faze: number; sila: number } => {
+    let nej = { bpm: 100, faze: 0, sila: 0, skore: -1 };
+    for (let bpm = minBpm; bpm <= maxBpm; bpm += 0.25) {
+      const f = hrebenovyFiltr(vzorek, 60 / bpm);
+      const skore = f.sila * prioritaTempa(bpm);
+      if (skore > nej.skore) nej = { bpm, faze: f.faze, sila: f.sila, skore };
+    }
+    return nej;
+  };
+
+  /*
+   * Delsi nahravku nelze merit jednim hrebenem pres celou delku: i desetina
+   * procenta rozdilu v tempu se za tri minuty nascita na cele doby a faze se
+   * rozjede, takze i pravidelne hrana skladba vyjde jako sum. Tempo proto
+   * hledame v prekryvajicich se oknech a bereme median.
+   */
+  const rozsah = ons[ons.length - 1]! - ons[0]!;
+  const okno = 12;
+  let nejlepsi: { bpm: number; faze: number; sila: number };
+  if (rozsah > okno * 2) {
+    const odhady: { bpm: number; sila: number }[] = [];
+    for (let zacatek = ons[0]!; zacatek + okno <= ons[ons.length - 1]!; zacatek += okno / 2) {
+      const vzorek = ons.filter((t) => t >= zacatek && t < zacatek + okno);
+      if (vzorek.length < 8) continue;
+      const v = hledej(vzorek);
+      odhady.push({ bpm: v.bpm, sila: v.sila });
+    }
+    if (odhady.length > 0) {
+      const serazene = [...odhady].sort((a, b) => a.bpm - b.bpm);
+      const stredni = serazene[serazene.length >> 1]!;
+      const sily = odhady.map((o) => o.sila).sort((a, b) => a - b);
+      // Faze se dopocita jeste jednou pres cele onsety, aby mrizka zacinala
+      // tam, kde skladba, i kdyz je jeji shoda v prumeru slabsi.
+      const f = hrebenovyFiltr(ons, 60 / stredni.bpm);
+      nejlepsi = { bpm: stredni.bpm, faze: f.faze, sila: sily[sily.length >> 1]! };
+    } else {
+      nejlepsi = hledej(ons);
+    }
+  } else {
+    nejlepsi = hledej(ons);
   }
 
   const perioda = 60 / nejlepsi.bpm;
