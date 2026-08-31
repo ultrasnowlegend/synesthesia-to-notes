@@ -135,7 +135,7 @@ pre .k { color: var(--tlumene); }
   <p class="eyebrow">Návrh aplikace · synesthesia-to-notes</p>
   <h1>Z videa zpět do not</h1>
   <p class="perex">Nahrávka improvizace s padajícími pruhy v sobě noty už obsahuje — jen v obraze místo v zápisu. Tady je, jak je dostat ven.</p>
-  <p class="stav">Ověřeno na tvé nahrávce · 97 % shoda se zvukem</p>
+  <p class="stav">Hotové · aplikace, sazba i napojení do SuperSystemu</p>
 </header>
 
 <hr class="del">
@@ -1143,6 +1143,164 @@ pre .k { color: var(--tlumene); }
 <hr class="del">
 
 <section>
+  <p class="eyebrow">Aplikace</p>
+  <h2>Ovladače nad živým náhledem</h2>
+  <p class="lead">Rytmus je jediné místo, kde automatika u improvizace nestačí. Proto se tempo a mřížka ladí ručně — a musí být okamžité.</p>
+
+  <figure>
+    <div class="ramec">
+      <svg viewBox="0 0 880 240" role="img" aria-label="Video se čte jednou do událostí v paměti; změna tempa nebo mřížky spouští jen poslední tři kroky, takže se noty překreslí okamžitě">
+        <defs><marker id="h18" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-hrot"></path></marker></defs>
+
+        <text x="20" y="24" class="d-lane">JEDNOU ZA VIDEO — DVACET SEKUND</text>
+        <rect x="20" y="34" width="150" height="50" rx="7" class="d-box"></rect>
+        <text x="95" y="56" class="d-lbl" text-anchor="middle">čtení videa</text>
+        <text x="95" y="72" class="d-sub" text-anchor="middle">5 769 snímků</text>
+        <path d="M170,59 L196,59" class="d-cara" marker-end="url(#h18)"></path>
+
+        <rect x="200" y="34" width="150" height="50" rx="7" class="d-box"></rect>
+        <text x="275" y="56" class="d-lbl" text-anchor="middle">detekce not</text>
+        <text x="275" y="72" class="d-sub" text-anchor="middle">1 526 událostí</text>
+        <path d="M350,59 L376,59" class="d-cara" marker-end="url(#h18)"></path>
+
+        <rect x="380" y="34" width="180" height="50" rx="7" class="d-box-akc"></rect>
+        <text x="470" y="56" class="d-lbl" text-anchor="middle">události v paměti</text>
+        <text x="470" y="72" class="d-sub" text-anchor="middle">tón, od, do, ruka</text>
+        <path d="M470,88 L470,124" class="d-akc" marker-end="url(#h18)"></path>
+
+        <text x="20" y="150" class="d-lane">PŘI KAŽDÉM POHYBU POSUVNÍKU — MILISEKUNDY</text>
+        <rect x="20" y="160" width="140" height="50" rx="7" class="d-box"></rect>
+        <text x="90" y="182" class="d-lbl" text-anchor="middle">tempo</text>
+        <text x="90" y="198" class="d-sub" text-anchor="middle">BPM, posun</text>
+        <path d="M160,185 L186,185" class="d-cara" marker-end="url(#h18)"></path>
+
+        <rect x="190" y="160" width="150" height="50" rx="7" class="d-box"></rect>
+        <text x="265" y="182" class="d-lbl" text-anchor="middle">kvantizace</text>
+        <text x="265" y="198" class="d-sub" text-anchor="middle">mřížka, legato</text>
+        <path d="M340,185 L366,185" class="d-cara" marker-end="url(#h18)"></path>
+
+        <rect x="370" y="160" width="140" height="50" rx="7" class="d-box"></rect>
+        <text x="440" y="188" class="d-lbl" text-anchor="middle">MusicXML</text>
+        <path d="M510,185 L536,185" class="d-cara" marker-end="url(#h18)"></path>
+
+        <rect x="540" y="160" width="170" height="50" rx="7" class="d-box-akc"></rect>
+        <text x="625" y="182" class="d-lbl" text-anchor="middle">Verovio → noty</text>
+        <text x="625" y="198" class="d-sub" text-anchor="middle">stejný kód i pro PDF</text>
+
+        <path d="M710,185 C790,185 790,110 730,110 L580,110" class="d-cara-tec" marker-end="url(#h18)"></path>
+        <text x="760" y="146" class="d-pop" text-anchor="middle">a znovu</text>
+      </svg>
+    </div>
+    <figcaption><b>Obrázek 19.</b> Tohle je důvod, proč se stopa barev vůbec počítá a ukládá. Bez ní by každé posunutí tempa znamenalo znovu přečíst celé video.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="ramec">
+      <svg viewBox="0 0 880 320" role="img" aria-label="Rozvržení okna: vlevo ovladače mřížky, klavírní rolka a kontrola kalibrace, vpravo vysázené noty a tlačítka exportu">
+        <rect x="20" y="16" width="840" height="290" rx="8" class="d-box-tec"></rect>
+
+        <rect x="28" y="24" width="824" height="32" rx="5" class="d-box"></rect>
+        <text x="42" y="44" class="d-lbl-s">nahrávka.mp4</text>
+        <g class="d-sub">
+          <text x="180" y="44">88 kláves</text>
+          <text x="258" y="44">1 526 not</text>
+          <text x="342" y="44">dis moll</text>
+        </g>
+        <text x="424" y="44" class="d-sub" fill="var(--leva)">shoda se zvukem 97 %</text>
+
+        <rect x="28" y="64" width="228" height="234" rx="5" class="d-box"></rect>
+        <text x="42" y="84" class="d-lane" fill="var(--akcent)">MŘÍŽKA</text>
+        <line x1="42" y1="100" x2="242" y2="100" class="d-osa"></line>
+        <line x1="42" y1="100" x2="150" y2="100" stroke="var(--akcent)" stroke-width="3"></line>
+        <circle cx="150" cy="100" r="4" fill="var(--akcent)"></circle>
+        <text x="42" y="118" class="d-sub">tempo 102 BPM</text>
+        <line x1="42" y1="134" x2="242" y2="134" class="d-osa"></line>
+        <line x1="42" y1="134" x2="96" y2="134" stroke="var(--akcent)" stroke-width="3"></line>
+        <circle cx="96" cy="134" r="4" fill="var(--akcent)"></circle>
+        <text x="42" y="152" class="d-sub">posun · dělení · takt · legato</text>
+
+        <text x="42" y="182" class="d-lane" fill="var(--akcent)">NALEZENÉ NOTY</text>
+        <rect x="42" y="190" width="200" height="42" rx="3" fill="var(--cerna-klavesa)"></rect>
+        <g fill="var(--prava)">
+          <rect x="56" y="198" width="22" height="3"></rect>
+          <rect x="92" y="204" width="16" height="3"></rect>
+          <rect x="120" y="200" width="30" height="3"></rect>
+          <rect x="166" y="206" width="20" height="3"></rect>
+          <rect x="200" y="201" width="26" height="3"></rect>
+        </g>
+        <g fill="var(--leva)">
+          <rect x="60" y="220" width="34" height="3"></rect>
+          <rect x="118" y="217" width="28" height="3"></rect>
+          <rect x="176" y="221" width="40" height="3"></rect>
+        </g>
+
+        <text x="42" y="258" class="d-lane" fill="var(--akcent)">KALIBRACE</text>
+        <rect x="42" y="266" width="200" height="24" rx="2" fill="var(--bila-klavesa)"></rect>
+        <g fill="var(--cerna-klavesa)">
+          <rect x="56" y="266" width="7" height="14"></rect>
+          <rect x="76" y="266" width="7" height="14"></rect>
+          <rect x="110" y="266" width="7" height="14"></rect>
+          <rect x="130" y="266" width="7" height="14"></rect>
+          <rect x="150" y="266" width="7" height="14"></rect>
+          <rect x="184" y="266" width="7" height="14"></rect>
+          <rect x="204" y="266" width="7" height="14"></rect>
+        </g>
+
+        <rect x="266" y="64" width="586" height="196" rx="5" fill="#fff" stroke="var(--linka)"></rect>
+        <g stroke="#222" stroke-width="1.1">
+          <line x1="300" y1="94" x2="820" y2="94"></line>
+          <line x1="300" y1="101" x2="820" y2="101"></line>
+          <line x1="300" y1="108" x2="820" y2="108"></line>
+          <line x1="300" y1="115" x2="820" y2="115"></line>
+          <line x1="300" y1="122" x2="820" y2="122"></line>
+          <line x1="300" y1="154" x2="820" y2="154"></line>
+          <line x1="300" y1="161" x2="820" y2="161"></line>
+          <line x1="300" y1="168" x2="820" y2="168"></line>
+          <line x1="300" y1="175" x2="820" y2="175"></line>
+          <line x1="300" y1="182" x2="820" y2="182"></line>
+          <line x1="300" y1="209" x2="820" y2="209"></line>
+          <line x1="300" y1="216" x2="820" y2="216"></line>
+          <line x1="300" y1="223" x2="820" y2="223"></line>
+          <line x1="300" y1="230" x2="820" y2="230"></line>
+          <line x1="300" y1="237" x2="820" y2="237"></line>
+        </g>
+        <g fill="#222">
+          <ellipse cx="340" cy="108" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="392" cy="101" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="444" cy="115" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="496" cy="94" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="548" cy="104" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="600" cy="112" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="652" cy="98" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="704" cy="108" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="340" cy="175" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="418" cy="168" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="496" cy="182" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="574" cy="161" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="652" cy="175" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="366" cy="223" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="444" cy="216" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="522" cy="230" rx="5" ry="3.6"></ellipse>
+          <ellipse cx="600" cy="223" rx="5" ry="3.6"></ellipse>
+        </g>
+
+        <rect x="266" y="266" width="586" height="30" rx="5" class="d-box"></rect>
+        <text x="282" y="285" class="d-sub">strana 1 ze 4</text>
+        <rect x="600" y="272" width="72" height="18" rx="4" class="d-box-tec"></rect>
+        <text x="636" y="285" class="d-sub" text-anchor="middle">MIDI</text>
+        <rect x="678" y="272" width="86" height="18" rx="4" class="d-box-tec"></rect>
+        <text x="721" y="285" class="d-sub" text-anchor="middle">MusicXML</text>
+        <rect x="770" y="272" width="72" height="18" rx="4" fill="var(--akcent)"></rect>
+        <text x="806" y="285" class="d-lbl-s" text-anchor="middle" fill="var(--plocha)">PDF</text>
+      </svg>
+    </div>
+    <figcaption><b>Obrázek 20.</b> Vlevo se ladí, vpravo se hned vidí výsledek. Klavírní rolka a kontrola kalibrace patří do panelu proto, že kalibrace je jediná část řetězce, kterou nejde ověřit zvukem — musí ji zkontrolovat oko.</figcaption>
+  </figure>
+</section>
+
+<hr class="del">
+
+<section>
   <p class="eyebrow">Postup</p>
   <h2>Plán po etapách</h2>
 
@@ -1151,7 +1309,7 @@ pre .k { color: var(--tlumene); }
       <svg viewBox="0 0 880 168" role="img" aria-label="Šest etap: jádro je rozepsané, následuje ffmpeg a CLI, kalibrace na ukázce, sledování rukou, aplikace se sazbou, a nakonec napojení do SuperSystemu">
         <line x1="60" y1="84" x2="820" y2="84" class="d-osa"></line>
 
-        <line x1="60" y1="84" x2="364" y2="84" stroke="var(--akcent)" stroke-width="2.5"></line>
+        <line x1="60" y1="84" x2="820" y2="84" stroke="var(--akcent)" stroke-width="2.5"></line>
 
         <circle cx="60" cy="84" r="13" fill="var(--akcent)"></circle>
         <text x="60" y="89" class="d-lbl" text-anchor="middle" fill="var(--plocha)">1</text>
@@ -1168,23 +1326,23 @@ pre .k { color: var(--tlumene); }
         <text x="364" y="52" class="d-lbl-s" text-anchor="middle">Kalibrace na ukázce</text>
         <text x="364" y="36" class="d-sub" text-anchor="middle" fill="var(--akcent)">hotové</text>
 
-        <circle cx="516" cy="84" r="13" fill="var(--plocha)" stroke="var(--tlumene)" stroke-width="1.6"></circle>
-        <text x="516" y="89" class="d-lbl" text-anchor="middle">4</text>
+        <circle cx="516" cy="84" r="13" fill="var(--akcent)"></circle>
+        <text x="516" y="89" class="d-lbl" text-anchor="middle" fill="var(--plocha)">4</text>
         <text x="516" y="122" class="d-lbl-s" text-anchor="middle">Sledování rukou</text>
-        <text x="516" y="138" class="d-sub" text-anchor="middle">dvě osnovy</text>
+        <text x="516" y="138" class="d-sub" text-anchor="middle" fill="var(--akcent)">hotové</text>
 
-        <circle cx="668" cy="84" r="13" fill="var(--plocha)" stroke="var(--tlumene)" stroke-width="1.6"></circle>
-        <text x="668" y="89" class="d-lbl" text-anchor="middle">5</text>
+        <circle cx="668" cy="84" r="13" fill="var(--akcent)"></circle>
+        <text x="668" y="89" class="d-lbl" text-anchor="middle" fill="var(--plocha)">5</text>
         <text x="668" y="52" class="d-lbl-s" text-anchor="middle">Aplikace a sazba</text>
-        <text x="668" y="36" class="d-sub" text-anchor="middle">Verovio, ovladače</text>
+        <text x="668" y="36" class="d-sub" text-anchor="middle" fill="var(--akcent)">hotové</text>
 
-        <circle cx="820" cy="84" r="13" fill="var(--plocha)" stroke="var(--tlumene)" stroke-width="1.6" stroke-dasharray="3 3"></circle>
-        <text x="820" y="89" class="d-lbl" text-anchor="middle">6</text>
+        <circle cx="820" cy="84" r="13" fill="var(--akcent)"></circle>
+        <text x="820" y="89" class="d-lbl" text-anchor="middle" fill="var(--plocha)">6</text>
         <text x="820" y="122" class="d-lbl-s" text-anchor="middle">Napojení</text>
-        <text x="820" y="138" class="d-sub" text-anchor="middle">modul v SuperSystemu</text>
+        <text x="820" y="138" class="d-sub" text-anchor="middle" fill="var(--akcent)">hotové</text>
       </svg>
     </div>
-    <figcaption><b>Obrázek 19.</b> Napojení do SuperSystemu je záměrně poslední — dokud není hotové, nemůže svazovat návrh aplikace.</figcaption>
+    <figcaption><b>Obrázek 21.</b> Napojení do SuperSystemu bylo záměrně poslední, aby nesvazovalo návrh aplikace. Modul odtud spustí <code>syn2noty --json</code>, průběh čte z chybového výstupu a výsledek ze standardního.</figcaption>
   </figure>
 </section>
 
@@ -1203,9 +1361,9 @@ pre .k { color: var(--tlumene); }
   </div>
 
   <ol class="otazky">
-    <li><b>Dohledat chybějící třetinu úderů.</b> Zvuk říká, kde jsou; jde o to najít je i v obraze.</li>
-    <li><b>Aplikace s ovladači tempa</b> nad živým náhledem not — bez ní zůstane rytmus nejslabším místem.</li>
-    <li><b>Druhá nahrávka na ověření</b>, ideálně s jiným záběrem kamery, aby se ukázalo, co je obecné a co platí jen pro tohle video.</li>
+    <li><b>Dohledat chybějící třetinu úderů.</b> Zvuk říká, kde jsou; jde o to najít je i v obraze. Zatím jediná věc, kde vím o rezervě a neumím ji vybrat.</li>
+    <li><b>Druhá nahrávka na ověření</b>, ideálně s jiným záběrem kamery. Ukázala by, co je obecné a co platí jen pro tohle jedno video.</li>
+    <li><b>Práh detekce je jediná ručně vybraná konstanta</b> v celém řetězci. Vybraná proti té tvé nahrávce; u jiného vzhledu videa může chtít doladit posuvníkem.</li>
   </ol>
 </section>
 
