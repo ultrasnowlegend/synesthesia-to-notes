@@ -5,7 +5,8 @@ is read off the image rather than guessed: every frame shows which key is being
 played. The audio only refines the timing of the strikes — and doubles as a
 measure of confidence, because image and audio are independent sources.
 
-Design and diagrams: [docs/architecture.html](docs/architecture.html).
+Design and diagrams: [docs/architektura.html](docs/architektura.html) — still in Czech,
+awaiting its own translation pass.
 
 ## The app
 
