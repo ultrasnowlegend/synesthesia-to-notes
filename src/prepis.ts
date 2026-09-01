@@ -5,6 +5,7 @@ import {
   type NastaveniDetekce,
 } from './jadro/detekce.js';
 import type { NastaveniKlaviatury } from './jadro/klaviatura.js';
+import { urciOktavovyPosun, type VysledekOktavy } from './jadro/oktava.js';
 import { najdiOnsety } from './jadro/onsety.js';
 import { prirazeniPodlePolohy, sledujRuce, type NastaveniRukou } from './jadro/ruce.js';
 import { sladSeZvukem, upresniPodleZvuku, type Sladeni } from './jadro/sladeni.js';
@@ -32,6 +33,8 @@ export interface NastaveniPrepisu {
   vzorkuKalibrace?: number;
   /** Vypnout pouziti zvuku; obraz pak funguje sam, jen s presnosti snimku. */
   bezZvuku?: boolean;
+  /** Nechat oktavu tak, jak vysla z obrazu, i kdyz zvuk radi jinak. */
+  oktavaZeZvuku?: boolean;
   /** Nepovinne hlaseni prubehu; CLI i aplikace si ho vykresli po svem. */
   naStav?: (zprava: string) => void;
 }
@@ -54,6 +57,8 @@ export interface VysledekPrepisu {
   prah: number;
   /** Shoda se zvukem; presnost je zaroven mira duvery v cely prepis. */
   sladeni: Sladeni;
+  /** Oktavova oprava odvozena ze zvuku. */
+  oktava: VysledekOktavy;
 }
 
 /**
@@ -98,10 +103,12 @@ export async function prepisVideo(
   rozdelPodleVysky(udalosti, delicBod);
 
   let sladeni: Sladeni = { posun: 0, presnost: 0, pokryti: 0 };
+  let oktava: VysledekOktavy = { posun: 0, jistota: 0, skore: [] };
   if (!nastaveni.bezZvuku) {
     hlas('porovnavam se zvukem');
     try {
-      const udery = najdiOnsety(await nactiVzorky(video));
+      const vzorky = await nactiVzorky(video);
+      const udery = najdiOnsety(vzorky);
       sladeni = sladSeZvukem(udalosti, udery);
       if (sladeni.presnost > 0.5) {
         upresniPodleZvuku(udalosti, udery, sladeni.posun);
@@ -111,6 +118,18 @@ export async function prepisVideo(
         `zvuk: ${udery.length} uderu, posun ${Math.round(sladeni.posun * 1000)} ms, ` +
           `shoda ${Math.round(sladeni.presnost * 100)} %`,
       );
+
+      // Rozlozeni klaves urci vysku az na nasobek oktavy. U zaberu, kde neni
+      // videt cela klaviatura, zbytek doplni zvuk.
+      if (nastaveni.oktavaZeZvuku ?? true) {
+        oktava = urciOktavovyPosun(vzorky, udalosti);
+        if (oktava.posun !== 0 && oktava.jistota > 0.15) {
+          for (const u of udalosti) u.midi += oktava.posun;
+          hlas(`oktava: posun o ${oktava.posun} pultonu (jistota ${oktava.jistota.toFixed(2)})`);
+        } else {
+          hlas(`oktava: obraz sedel (jistota ${oktava.jistota.toFixed(2)})`);
+        }
+      }
     } catch (e) {
       hlas(`zvuk se nepodarilo zpracovat (${(e as Error).message}); pokracuji bez nej`);
     }
@@ -137,5 +156,6 @@ export async function prepisVideo(
     rychlostPadu: detekce.rychlostPadu,
     prah: detekce.prah,
     sladeni,
+    oktava,
   };
 }
