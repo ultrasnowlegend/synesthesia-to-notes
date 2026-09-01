@@ -124,7 +124,11 @@ export async function prepisVideo(
       if (nastaveni.oktavaZeZvuku ?? true) {
         oktava = urciOktavovyPosun(vzorky, udalosti);
         if (oktava.posun !== 0 && oktava.jistota > 0.15) {
+          // Posun se musi promitnout i do geometrie a stopy. Jinak by nahled
+          // kalibrace popisoval klavesy o oktavu vedle nez vysledne noty.
           for (const u of udalosti) u.midi += oktava.posun;
+          for (const k of geometrie.klavesy) k.midi += oktava.posun;
+          for (let i = 0; i < stopa.midi.length; i++) stopa.midi[i]! += oktava.posun;
           hlas(`oktava: posun o ${oktava.posun} pultonu (jistota ${oktava.jistota.toFixed(2)})`);
         } else {
           hlas(`oktava: obraz sedel (jistota ${oktava.jistota.toFixed(2)})`);

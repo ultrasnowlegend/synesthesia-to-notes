@@ -24,6 +24,8 @@ const NAPOVEDA = `syn2noty — prevede video klaviru se synesthesia efekty na no
       --deleni <4>       nejmensi delena doba: 4 = sestnactiny, 3 = trioly
       --prvni-midi <21>  MIDI cislo nejlevejsi bile klavesy
       --prah <0.12>      prah detekce pruhu, 0..1
+      --min-snimku <2>   nejkratsi prijaty ton ve snimcich
+      --spoj-mezeru <1>  mezery do tolika snimku se slucuji
       --hrany <a,b>      rucni horni a dolni hrana klaviatury v pixelech
       --pomer-souseda <1.8>  kolikrat silnejsi soused zahodi klavesu jako preteceni
       --bez-zvuku        neporovnavat se zvukovou stopou
@@ -52,6 +54,8 @@ function zpracujArgumenty(argv: readonly string[]): Prepinace | null {
       case '--bpm': nastaveni.tempo!.bpm = Number(dalsi()); break;
       case '--deleni': nastaveni.tempo!.deleni = Number(dalsi()); break;
       case '--prah': nastaveni.detekce!.prah = Number(dalsi()); break;
+      case '--min-snimku': nastaveni.detekce!.minSnimku = Number(dalsi()); break;
+      case '--spoj-mezeru': nastaveni.detekce!.spojMezeruSnimku = Number(dalsi()); break;
       case '--prvni-midi': nastaveni.klaviatura!.prvniMidi = Number(dalsi()); break;
       case '--pomer-souseda': nastaveni.detekce!.pomerSouseda = Number(dalsi()); break;
       case '--bez-zvuku': nastaveni.bezZvuku = true; break;
