@@ -1,8 +1,8 @@
-import type { MostAplikace } from '../electron/sdilene.js';
+import type { AppBridge } from '../electron/shared.js';
 
 declare global {
   interface Window {
-    aplikace: MostAplikace;
+    app: AppBridge;
   }
 }
 

@@ -15,7 +15,7 @@ export default defineConfig({
     react(),
     electron([
       {
-        entry: 'electron/hlavni.ts',
+        entry: 'electron/main.ts',
         vite: {
           build: {
             outDir: '../dist-electron',

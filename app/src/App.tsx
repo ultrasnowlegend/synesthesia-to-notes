@@ -1,75 +1,75 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type {
-  NastaveniMrizky,
-  NastaveniPrepisuOkna,
-  Souhrn,
-} from '../electron/sdilene.js';
-import { Prubeh } from './obrazovky/Prubeh.js';
-import { Uvod } from './obrazovky/Uvod.js';
-import { Vysledek } from './obrazovky/Vysledek.js';
+import type { GridOptions, Summary, TranscribeInput } from '../electron/shared.js';
+import { Intro } from './screens/Intro.js';
+import { Progress } from './screens/Progress.js';
+import { Result } from './screens/Result.js';
 
-export type Stav = 'uvod' | 'prubeh' | 'vysledek';
+export type Screen = 'intro' | 'progress' | 'result';
 
-const VYCHOZI_MRIZKA: NastaveniMrizky = { deleni: 4, citatel: 4, jmenovatel: 4, legato: 1 };
+const DEFAULT_GRID: GridOptions = { division: 4, numerator: 4, denominator: 4, legato: 1 };
 
 export function App(): React.JSX.Element {
-  const [stav, setStav] = useState<Stav>('uvod');
-  const [cesta, setCesta] = useState('');
-  const [radky, setRadky] = useState<string[]>([]);
-  const [souhrn, setSouhrn] = useState<Souhrn | null>(null);
-  const [mrizka, setMrizka] = useState<NastaveniMrizky>(VYCHOZI_MRIZKA);
-  const [chyba, setChyba] = useState('');
-  const rucni = useRef<NastaveniPrepisuOkna>({});
+  const [screen, setScreen] = useState<Screen>('intro');
+  const [path, setPath] = useState('');
+  const [lines, setLines] = useState<string[]>([]);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [grid, setGrid] = useState<GridOptions>(DEFAULT_GRID);
+  const [error, setError] = useState('');
+  const manual = useRef<TranscribeInput>({});
 
-  useEffect(() => window.aplikace.naStav((z) => setRadky((r) => [...r, z])), []);
+  useEffect(() => window.app.onStatus((m) => setLines((r) => [...r, m])), []);
 
-  const spust = useCallback(
-    async (soubor: string, nastaveni: NastaveniPrepisuOkna, novaMrizka: NastaveniMrizky) => {
-      rucni.current = nastaveni;
-      setCesta(soubor);
-      setRadky([]);
-      setChyba('');
-      setStav('prubeh');
-      const odpoved = await window.aplikace.prepis(soubor, { ...nastaveni, ...novaMrizka });
-      if (odpoved.ok && odpoved.data) {
-        // Odhadnute tempo se stava vychozi hodnotou ovladacu, aby posuvnik
-        // zacinal tam, kde skoncil odhad, a ne na nahodne konstante.
-        setMrizka({ ...novaMrizka, bpm: odpoved.data.tempo.bpm, offset: odpoved.data.tempo.offset });
-        setSouhrn(odpoved.data);
-        setStav('vysledek');
+  const run = useCallback(
+    async (file: string, input: TranscribeInput, nextGrid: GridOptions) => {
+      manual.current = input;
+      setPath(file);
+      setLines([]);
+      setError('');
+      setScreen('progress');
+      const reply = await window.app.transcribe(file, { ...input, ...nextGrid });
+      if (reply.ok && reply.data) {
+        // The estimated tempo becomes the starting value of the controls, so the
+        // slider begins where the estimate ended and not at some constant.
+        setGrid({ ...nextGrid, bpm: reply.data.tempo.bpm, offset: reply.data.tempo.offset });
+        setSummary(reply.data);
+        setScreen('result');
       } else {
-        setChyba(odpoved.chyba ?? 'Prepis se nepodaril.');
-        setStav('uvod');
+        setError(reply.error ?? 'The transcription failed.');
+        setScreen('intro');
       }
     },
     [],
   );
 
-  const prekvantuj = useCallback(async (nova: NastaveniMrizky) => {
-    setMrizka(nova);
-    const odpoved = await window.aplikace.prekvantuj(nova);
-    if (odpoved.ok && odpoved.data) {
-      // Nahledy se pri prekvantovani neposilaji znovu; drzime ty puvodni.
-      setSouhrn((s) =>
+  const requantise = useCallback(async (next: GridOptions) => {
+    setGrid(next);
+    const reply = await window.app.requantise(next);
+    if (reply.ok && reply.data) {
+      // Previews are not resent on requantisation; keep the originals.
+      setSummary((s) =>
         s
-          ? { ...odpoved.data!, nahledKalibrace: s.nahledKalibrace, nahledRolky: s.nahledRolky }
-          : (odpoved.data ?? null),
+          ? {
+              ...reply.data!,
+              calibrationPreview: s.calibrationPreview,
+              rollPreview: s.rollPreview,
+            }
+          : (reply.data ?? null),
       );
     }
   }, []);
 
-  if (stav === 'prubeh') return <Prubeh cesta={cesta} radky={radky} />;
-  if (stav === 'vysledek' && souhrn) {
+  if (screen === 'progress') return <Progress path={path} lines={lines} />;
+  if (screen === 'result' && summary) {
     return (
-      <Vysledek
-        souhrn={souhrn}
-        mrizka={mrizka}
-        naMrizku={prekvantuj}
-        naZnovu={(n) => void spust(cesta, n, mrizka)}
-        naNove={() => setStav('uvod')}
+      <Result
+        summary={summary}
+        grid={grid}
+        onGrid={requantise}
+        onRerun={(input) => void run(path, input, grid)}
+        onNew={() => setScreen('intro')}
       />
     );
   }
-  return <Uvod chyba={chyba} naVideo={(s) => void spust(s, {}, VYCHOZI_MRIZKA)} />;
+  return <Intro error={error} onVideo={(file) => void run(file, {}, DEFAULT_GRID)} />;
 }

@@ -1,0 +1,308 @@
+/*
+ * Own styling, deliberately without a library. A dark surface because the work
+ * is with video, and an amber accent taken from the colour of the bars.
+ */
+
+:root {
+  --ground: #10131a;
+  --panel: #171b24;
+  --panel-2: #1e232e;
+  --rule: #2a3140;
+  --ink: #e4e8f0;
+  --muted: #8a93a5;
+  --accent: #f0a93a;
+  --left-hand: #3fb8a3;
+  --danger: #f0806e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: var(--panel-2);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a1206;
+  font-weight: 600;
+}
+button.primary:hover:not(:disabled) {
+  filter: brightness(1.12);
+  color: #1a1206;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+input[type="number"],
+select {
+  font: inherit;
+  color: inherit;
+  background: var(--panel-2);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.28rem 0.45rem;
+  width: 100%;
+}
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+/* Intro screen */
+.intro {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+.intro-card {
+  max-width: 46rem;
+  text-align: center;
+}
+.intro h1 {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5rem;
+}
+.intro p {
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0 auto 1.6rem;
+  max-width: 34rem;
+}
+.dropzone {
+  border: 2px dashed var(--rule);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+.dropzone.active {
+  border-color: var(--accent);
+  background: rgba(240, 169, 58, 0.06);
+}
+
+/* Progress screen */
+.progress {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+.progress-inner {
+  width: min(40rem, 100%);
+}
+.progress h2 {
+  margin: 0 0 0.3rem;
+  font-size: 1.2rem;
+}
+.progress .file {
+  color: var(--muted);
+  margin: 0 0 1.4rem;
+  word-break: break-all;
+}
+.log {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.82rem;
+  line-height: 1.75;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+.log div:last-child {
+  color: var(--accent);
+}
+
+/* Result screen */
+.result {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 1.1rem;
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel);
+}
+.topbar .name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 22rem;
+}
+.chips {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.chip {
+  border: 1px solid var(--rule);
+  border-radius: 100px;
+  padding: 0.18rem 0.62rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.chip b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.chip.good b {
+  color: var(--left-hand);
+}
+.chip.weak b {
+  color: var(--danger);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 22rem 1fr;
+  min-height: 0;
+}
+.panel {
+  border-right: 1px solid var(--rule);
+  background: var(--panel);
+  overflow-y: auto;
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.group {
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--panel-2);
+  padding: 0.8rem 0.85rem;
+}
+.group h3 {
+  margin: 0 0 0.7rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+}
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+.row:last-child {
+  margin-bottom: 0;
+}
+.row label {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.row .value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  min-width: 4.2rem;
+  text-align: right;
+}
+.slider {
+  grid-column: 1 / -1;
+}
+.hint {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 0.6rem 0 0;
+}
+.preview {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+  display: block;
+  image-rendering: pixelated;
+}
+
+.score {
+  overflow: auto;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  min-height: 0;
+}
+.sheet {
+  background: #fff;
+  border-radius: 4px;
+  width: min(60rem, 100%);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+.sheet svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--muted);
+}
+.footer {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.7rem 1.1rem;
+  border-top: 1px solid var(--rule);
+  background: var(--panel);
+  align-items: center;
+}
+.footer .spacer {
+  flex: 1;
+}
+.message {
+  color: var(--left-hand);
+  font-size: 0.85rem;
+}
+.error {
+  color: var(--danger);
+  font-size: 0.85rem;
+}

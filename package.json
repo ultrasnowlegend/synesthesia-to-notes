@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Prevod videa s Synthesia-style efekty zpet na notovy zapis",
   "type": "module",
-  "main": "dist-electron/hlavni.js",
+  "main": "dist-electron/main.js",
   "types": "dist/src/index.d.ts",
   "exports": {
     ".": "./dist/src/index.js",

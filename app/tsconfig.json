@@ -22,7 +22,6 @@
   "include": [
     "src",
     "electron",
-    "typy-modulu.d.ts",
     "../src"
   ]
 }
