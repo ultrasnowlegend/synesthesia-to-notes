@@ -22,7 +22,10 @@ export function App(): React.JSX.Element {
   const [returnTo, setReturnTo] = useState<Screen>('intro');
   const manual = useRef<TranscribeInput>({});
 
-  useEffect(() => window.app.onStatus((m) => setLines((r) => [...r, m])), []);
+  useEffect(() => {
+    const off = window.app.onStatus((m) => setLines((r) => [...r, m]));
+    return off;
+  }, []);
 
   const run = useCallback(
     async (file: string, input: TranscribeInput, nextGrid: GridOptions) => {

@@ -90,7 +90,7 @@ export function Keyboard({ ref }: { ref?: React.Ref<KeyboardHandle> }): React.JS
 
   return (
     <div className="piano-strip h-full">
-      <svg ref={svgRef} viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true" />
+      <svg ref={svgRef} className="block h-full w-full" viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true" />
     </div>
   );
 }

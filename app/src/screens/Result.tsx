@@ -62,7 +62,9 @@ function Field({
 }): React.JSX.Element {
   // The score is redrawn when the thumb is let go, not on every pixel.
   const [draft, setDraft] = useState(value);
-  useEffect(() => setDraft(value), [value]);
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -172,7 +174,7 @@ export function Result({ summary, grid, onGrid, onRerun, onNew, onPractice }: Pr
                 unit="s"
                 onChange={(v) => onGrid({ ...grid, offset: v })}
               />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-[1fr_5.5rem] gap-3">
                 <div className="space-y-2">
                   <Label>Dělení doby</Label>
                   <Select

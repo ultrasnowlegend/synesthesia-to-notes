@@ -23,7 +23,11 @@ const STAGES: [RegExp, string][] = [
 
 export function Progress({ path, lines }: Props): React.JSX.Element {
   const end = useRef<HTMLDivElement>(null);
-  useEffect(() => end.current?.scrollIntoView({ block: 'end' }), [lines]);
+  useEffect(() => {
+    // Braces matter: newer Chromium returns a promise from scrollIntoView, and
+    // React would take a returned promise for a clean-up function.
+    end.current?.scrollIntoView({ block: 'end' });
+  }, [lines]);
 
   let reached = 0;
   for (const line of lines) {
