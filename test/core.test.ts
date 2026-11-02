@@ -166,3 +166,21 @@ test('a low note of the right hand is engraved in the bass clef', () => {
   const high = bar.slice(bar.indexOf('<octave>6</octave>'));
   assert.match(high.slice(0, 400), /<staff>1<\/staff>/, 'C6 belongs to the treble staff');
 });
+
+test('eighths and sixteenths are beamed within the beat, triplets get their 3', () => {
+  const n = (midi: number, beat: number, length: number): Note => ({ midi, beat, length, hand: 'right', velocity: 80 });
+  const notes = [
+    n(72, 0, 0.25), n(74, 0.25, 0.25), n(76, 0.5, 0.25), n(77, 0.75, 0.25),
+    n(79, 1, 0.5), n(77, 1.5, 0.5),
+    n(76, 2, 1 / 3), n(74, 2 + 1 / 3, 1 / 3), n(72, 2 + 2 / 3, 1 / 3),
+    n(71, 3, 1),
+  ];
+  const xml = writeMusicXml(notes, { bpm: 100, offset: 0, numerator: 4, denominator: 4, fit: 1 }, 0);
+  const count = (pattern: RegExp): number => (xml.match(pattern) ?? []).length;
+  assert.equal(count(/<beam number="1">begin<\/beam>/g), 3, 'one beam per beat of short notes');
+  assert.equal(count(/<beam number="1">end<\/beam>/g), 3);
+  assert.equal(count(/<beam number="2">begin<\/beam>/g), 1, 'the sixteenths share a second beam');
+  assert.equal(count(/<tuplet type="start"/g), 1);
+  assert.equal(count(/<tuplet type="stop"/g), 1);
+  assert.ok(!/<beam[^>]*>[^<]*<\/beam>\s*<\/note>\s*<note>\s*<rest/.test(xml));
+});

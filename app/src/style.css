@@ -1,555 +1,253 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@fontsource-variable/inter';
+
 /*
- * Own styling, deliberately without a library. A dark surface because the work
- * is with video, and an amber accent taken from the colour of the bars.
+ * Design tokens in the shadcn/ui convention. The chrome is a quiet, flat
+ * surface so the score — always white paper — is the brightest thing on
+ * screen. The amber accent is the colour of the falling bars in the videos
+ * this app started from; green and red keep one meaning each everywhere:
+ * played and missed.
  */
 
+@custom-variant dark (&:is(.dark *));
+
 :root {
-  --ground: #10131a;
-  --panel: #171b24;
-  --panel-2: #1e232e;
-  --rule: #2a3140;
-  --ink: #e4e8f0;
-  --muted: #8a93a5;
-  --accent: #f0a93a;
-  --left-hand: #3fb8a3;
-  --danger: #f0806e;
+  --radius: 0.65rem;
+  --background: oklch(0.985 0.002 250);
+  --foreground: oklch(0.2 0.012 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.012 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.012 260);
+  --primary: oklch(0.78 0.155 70);
+  --primary-foreground: oklch(0.24 0.05 60);
+  --secondary: oklch(0.955 0.004 250);
+  --secondary-foreground: oklch(0.25 0.012 260);
+  --muted: oklch(0.955 0.004 250);
+  --muted-foreground: oklch(0.47 0.015 260);
+  --accent: oklch(0.95 0.006 250);
+  --accent-foreground: oklch(0.22 0.012 260);
+  --destructive: oklch(0.58 0.21 27);
+  --success: oklch(0.56 0.15 152);
+  --warning: oklch(0.7 0.16 70);
+  --border: oklch(0.91 0.006 250);
+  --input: oklch(0.89 0.008 250);
+  --ring: oklch(0.72 0.15 70);
+  --paper: oklch(1 0 0);
+  --stage: oklch(0.93 0.006 250);
 }
 
-* {
-  box-sizing: border-box;
+.dark {
+  --background: oklch(0.165 0.008 265);
+  --foreground: oklch(0.94 0.006 250);
+  --card: oklch(0.205 0.01 265);
+  --card-foreground: oklch(0.94 0.006 250);
+  --popover: oklch(0.215 0.01 265);
+  --popover-foreground: oklch(0.94 0.006 250);
+  --primary: oklch(0.8 0.15 72);
+  --primary-foreground: oklch(0.22 0.05 60);
+  --secondary: oklch(0.26 0.012 265);
+  --secondary-foreground: oklch(0.94 0.006 250);
+  --muted: oklch(0.25 0.012 265);
+  --muted-foreground: oklch(0.72 0.015 255);
+  --accent: oklch(0.28 0.014 265);
+  --accent-foreground: oklch(0.96 0.005 250);
+  --destructive: oklch(0.68 0.19 25);
+  --success: oklch(0.74 0.16 152);
+  --warning: oklch(0.8 0.15 75);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 13%);
+  --ring: oklch(0.8 0.15 72);
+  --paper: oklch(1 0 0);
+  --stage: oklch(0.13 0.008 265);
 }
 
-html,
-body,
-#root {
-  height: 100%;
-  margin: 0;
+@theme inline {
+  --font-sans: 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-paper: var(--paper);
+  --color-stage: var(--stage);
 }
 
-body {
-  background: var(--ground);
-  color: var(--ink);
-  font-family: "Segoe UI", system-ui, sans-serif;
-  font-size: 14px;
-  overflow: hidden;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+    overflow: hidden;
+  }
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
 }
 
-button {
-  font: inherit;
-  color: inherit;
-  background: var(--panel-2);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  padding: 0.5rem 0.9rem;
-  cursor: pointer;
-}
-button:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-button:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-button.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #1a1206;
-  font-weight: 600;
-}
-button.primary:hover:not(:disabled) {
-  filter: brightness(1.12);
-  color: #1a1206;
-}
-button:focus-visible,
-input:focus-visible,
-select:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
-input[type="number"],
-select {
-  font: inherit;
-  color: inherit;
-  background: var(--panel-2);
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  padding: 0.28rem 0.45rem;
-  width: 100%;
-}
-input[type="range"] {
-  width: 100%;
-  accent-color: var(--accent);
-}
+/*
+ * The engraved score. Verovio's SVG is plain markup inserted outside React,
+ * so its states are styled here rather than with utility classes.
+ */
+@layer components {
+  .score-sheet {
+    background: var(--paper);
+    color: #111;
+  }
+  .score-sheet .system {
+    position: relative;
+    flex: none;
+    border-left: 4px solid transparent;
+    transition: background-color 200ms ease-out, border-color 200ms ease-out;
+  }
+  .score-sheet .system svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .score-sheet .system + .system {
+    border-top: 1px solid #eef0f3;
+  }
+  .score-sheet .system.is-playing {
+    border-left-color: oklch(0.78 0.155 70);
+    background: #fffaf0;
+  }
+  .score-sheet .system.is-next {
+    border-left-color: oklch(0.88 0.08 75);
+  }
+  .score-sheet .system.in-loop {
+    background-image: linear-gradient(90deg, oklch(0.93 0.05 250 / 0.35), transparent 40%);
+  }
+  .score-sheet .slot-empty {
+    flex: 1;
+  }
+  .score-sheet g.note.st-current {
+    fill: #c26400;
+    color: #c26400;
+  }
+  .score-sheet g.note.st-hit {
+    fill: #0f8a4a;
+    color: #0f8a4a;
+  }
+  .score-sheet g.note.st-missed {
+    fill: #d0332a;
+    color: #d0332a;
+  }
+  .score-sheet g.note.st-unsure {
+    fill: #6f9f86;
+    color: #6f9f86;
+  }
+  .score-sheet .system.is-next.wraps::before {
+    content: 'pokračování ↓';
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    z-index: 1;
+    font: 600 11px/1 'Inter Variable', system-ui, sans-serif;
+    letter-spacing: 0.02em;
+    color: #8a5a00;
+    background: #fdf0d5;
+    border-radius: 999px;
+    padding: 4px 8px;
+  }
+  .score-sheet.night .system.is-next.wraps::before {
+    color: #f3c46b;
+    background: #3a2c15;
+  }
+  .score-sheet g.note.st-skipped {
+    fill: #b7bec9;
+    color: #b7bec9;
+  }
+  .score-sheet g.note.st-playback {
+    fill: #2463d6;
+    color: #2463d6;
+  }
+  .score-sheet g.measure.loop-edge > g.barLine {
+    color: #2463d6;
+  }
+  .step-cursor {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    border-radius: 6px;
+    background: oklch(0.8 0.15 72 / 0.16);
+    border: 1px solid oklch(0.8 0.15 72 / 0.6);
+    pointer-events: none;
+    transition: left 120ms ease-out, width 120ms ease-out;
+  }
+  /* Night reading: the paper turns dark, the notes keep their colours. */
+  .score-sheet.night {
+    background: #15171c;
+  }
+  .score-sheet.night .system svg {
+    filter: invert(0.92) hue-rotate(180deg);
+  }
+  .score-sheet.night .system.is-playing {
+    background: #1f1c16;
+  }
+  .score-sheet.night .system + .system {
+    border-top-color: #23262d;
+  }
 
-/* Intro screen */
-.intro {
-  height: 100%;
-  display: grid;
-  place-items: center;
-  padding: 2rem;
-}
-.intro-card {
-  max-width: 46rem;
-  text-align: center;
-}
-.intro h1 {
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
-  letter-spacing: -0.02em;
-  margin: 0 0 0.5rem;
-}
-.intro p {
-  color: var(--muted);
-  line-height: 1.6;
-  margin: 0 auto 1.6rem;
-  max-width: 34rem;
-}
-.dropzone {
-  border: 2px dashed var(--rule);
-  border-radius: 16px;
-  padding: 3rem 2rem;
-  transition: border-color 0.15s, background 0.15s;
-}
-.dropzone.active {
-  border-color: var(--accent);
-  background: rgba(240, 169, 58, 0.06);
-}
-
-/* Progress screen */
-.progress {
-  height: 100%;
-  display: grid;
-  place-items: center;
-  padding: 2rem;
-}
-.progress-inner {
-  width: min(40rem, 100%);
-}
-.progress h2 {
-  margin: 0 0 0.3rem;
-  font-size: 1.2rem;
-}
-.progress .file {
-  color: var(--muted);
-  margin: 0 0 1.4rem;
-  word-break: break-all;
-}
-.log {
-  background: var(--panel);
-  border: 1px solid var(--rule);
-  border-radius: 10px;
-  padding: 0.9rem 1.1rem;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 0.82rem;
-  line-height: 1.75;
-  max-height: 16rem;
-  overflow-y: auto;
-}
-.log div:last-child {
-  color: var(--accent);
-}
-
-/* Result screen */
-.result {
-  height: 100%;
-  display: grid;
-  grid-template-rows: auto 1fr;
-}
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.7rem 1.1rem;
-  border-bottom: 1px solid var(--rule);
-  background: var(--panel);
-}
-.topbar .name {
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 22rem;
-}
-.chips {
-  display: flex;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-  flex: 1;
-}
-.chip {
-  border: 1px solid var(--rule);
-  border-radius: 100px;
-  padding: 0.18rem 0.62rem;
-  font-size: 0.78rem;
-  color: var(--muted);
-  white-space: nowrap;
-}
-.chip b {
-  color: var(--ink);
-  font-weight: 600;
-}
-.chip.good b {
-  color: var(--left-hand);
-}
-.chip.weak b {
-  color: var(--danger);
-}
-
-.body {
-  display: grid;
-  grid-template-columns: 22rem 1fr;
-  min-height: 0;
-}
-.panel {
-  border-right: 1px solid var(--rule);
-  background: var(--panel);
-  overflow-y: auto;
-  padding: 0.9rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-}
-.group {
-  border: 1px solid var(--rule);
-  border-radius: 10px;
-  background: var(--panel-2);
-  padding: 0.8rem 0.85rem;
-}
-.group h3 {
-  margin: 0 0 0.7rem;
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
-  font-weight: 700;
-}
-.row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.55rem;
-}
-.row:last-child {
-  margin-bottom: 0;
-}
-.row label {
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-.row .value {
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  min-width: 4.2rem;
-  text-align: right;
-}
-.slider {
-  grid-column: 1 / -1;
-}
-.hint {
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.5;
-  margin: 0.6rem 0 0;
-}
-.preview {
-  width: 100%;
-  border-radius: 6px;
-  border: 1px solid var(--rule);
-  display: block;
-  image-rendering: pixelated;
-}
-
-.score {
-  overflow: auto;
-  padding: 1.2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  min-height: 0;
-}
-.sheet {
-  background: #fff;
-  border-radius: 4px;
-  width: min(60rem, 100%);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
-}
-.sheet svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.pager {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  color: var(--muted);
-}
-.footer {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.7rem 1.1rem;
-  border-top: 1px solid var(--rule);
-  background: var(--panel);
-  align-items: center;
-}
-.footer .spacer {
-  flex: 1;
-}
-.message {
-  color: var(--left-hand);
-  font-size: 0.85rem;
-}
-.error {
-  color: var(--danger);
-  font-size: 0.85rem;
-}
-
-/* Intro: the second way in, for scores that already exist */
-.intro-alt {
-  margin-top: 1.4rem;
-  display: flex;
-  gap: 0.7rem;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  color: var(--muted);
-}
-.intro-alt .formats {
-  font-size: 0.78rem;
-}
-
-/* Playing from the score */
-.practice {
-  height: 100%;
-  display: grid;
-  grid-template-rows: auto 1fr auto auto;
-  background: var(--ground);
-}
-.practice-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.55rem 0.9rem;
-  border-bottom: 1px solid var(--rule);
-  background: var(--panel);
-  flex-wrap: wrap;
-}
-.practice-bar .name {
-  font-weight: 600;
-  max-width: 16rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.practice-bar .spacer {
-  flex: 1;
-}
-.practice-bar button {
-  padding: 0.38rem 0.7rem;
-}
-.practice-bar select.compact {
-  width: auto;
-  padding: 0.36rem 0.45rem;
-}
-.practice-bar .chip b.ok {
-  color: var(--left-hand);
-}
-.practice-bar .chip b.bad {
-  color: var(--danger);
-}
-.segmented {
-  display: inline-flex;
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  overflow: hidden;
-}
-.segmented button {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-}
-.segmented button + button {
-  border-left: 1px solid var(--rule);
-}
-.segmented button.on {
-  background: var(--accent);
-  color: #1a1206;
-  font-weight: 600;
-}
-.segmented button.on:hover {
-  color: #1a1206;
-}
-.zoom {
-  display: inline-flex;
-  gap: 0.25rem;
-}
-.meter {
-  width: 4.5rem;
-  height: 0.5rem;
-  border-radius: 100px;
-  background: var(--panel-2);
-  border: 1px solid var(--rule);
-  overflow: hidden;
-}
-.meter-fill {
-  height: 100%;
-  width: 0;
-  background: var(--left-hand);
-  transition: width 60ms linear;
-}
-.meter-fill.hot {
-  background: var(--danger);
-}
-
-.practice-stage {
-  position: relative;
-  min-height: 0;
-  padding: 0.6rem;
-}
-.practice-score {
-  height: 100%;
-  background: #fff;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-}
-.practice-score.scrolling {
-  overflow-y: auto;
-  display: block;
-}
-.practice-score .system {
-  position: relative;
-  flex: none;
-  border-left: 4px solid transparent;
-}
-.practice-score .system svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.practice-score .system + .system {
-  border-top: 1px solid #eef0f3;
-}
-.practice-score .system.is-playing {
-  border-left-color: var(--accent);
-  background: #fffaf1;
-}
-.practice-score .system.is-next {
-  border-left-color: #f4d29c;
-}
-.practice-score .slot-empty {
-  flex: 1;
-}
-
-/* The notes themselves: coloured by what the follower made of them. */
-.practice-score g.note.st-current {
-  fill: #c76a00;
-  color: #c76a00;
-}
-.practice-score g.note.st-hit {
-  fill: #12924f;
-  color: #12924f;
-}
-.practice-score g.note.st-missed {
-  fill: #d23b2f;
-  color: #d23b2f;
-}
-.practice-score g.note.st-skipped {
-  fill: #b9c0ca;
-  color: #b9c0ca;
-}
-.step-cursor {
-  position: absolute;
-  top: 6px;
-  bottom: 6px;
-  border-radius: 6px;
-  background: rgba(240, 169, 58, 0.16);
-  border: 1px solid rgba(240, 169, 58, 0.55);
-  pointer-events: none;
-  transition: left 120ms ease-out, width 120ms ease-out;
-}
-
-.practice-overlay {
-  position: absolute;
-  inset: 0.6rem;
-  display: grid;
-  place-items: center;
-  color: var(--muted);
-  pointer-events: none;
-}
-.practice-overlay.error {
-  color: var(--danger);
-}
-.practice-overlay.done {
-  background: rgba(16, 19, 26, 0.55);
-  border-radius: 6px;
-  pointer-events: auto;
-}
-.done-card {
-  background: var(--panel);
-  border: 1px solid var(--rule);
-  border-radius: 12px;
-  padding: 1.6rem 2rem;
-  text-align: center;
-  color: var(--ink);
-}
-.done-card h2 {
-  margin: 0 0 0.5rem;
-}
-
-.practice-foot {
-  display: flex;
-  gap: 1.2rem;
-  align-items: center;
-  padding: 0.35rem 0.9rem;
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-.practice-foot .heard {
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  flex: 1;
-}
-.practice-foot .hint {
-  font-size: 0.75rem;
-}
-
-.keyboard {
-  height: 3.2rem;
-  padding: 0 0.6rem 0.5rem;
-}
-.keyboard svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-.keyboard .key.white {
-  fill: #e9ecf1;
-  stroke: #9aa3b1;
-  stroke-width: 0.4;
-}
-.keyboard .key.black {
-  fill: #1d2129;
-}
-.keyboard .key.due {
-  fill: #f6c46f;
-}
-.keyboard .key.black.due {
-  fill: #c97f12;
-}
-.keyboard .key.flash-ok {
-  fill: #22b36a;
-}
-.keyboard .key.flash-wrong {
-  fill: #e5483b;
-}
-
-.practice.is-fullscreen .practice-foot .hint {
-  display: none;
+  .piano-strip .key.white {
+    fill: #eceef2;
+    stroke: #9aa3b1;
+    stroke-width: 0.4;
+  }
+  .piano-strip .key.black {
+    fill: #1d2129;
+  }
+  .piano-strip .key.due {
+    fill: #f5c46c;
+  }
+  .piano-strip .key.black.due {
+    fill: #c97f12;
+  }
+  .piano-strip .key.flash-ok {
+    fill: #22b36a;
+  }
+  .piano-strip .key.flash-wrong {
+    fill: #e5483b;
+  }
+  .piano-strip .key.sounding {
+    fill: #6d9cf0;
+  }
 }

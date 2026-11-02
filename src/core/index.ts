@@ -22,3 +22,4 @@ export * from './follow.js';
 export * from './score.js';
 export * from './import.js';
 export * from './turning.js';
+export * from './demo.js';

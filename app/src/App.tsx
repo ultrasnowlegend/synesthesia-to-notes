@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { GridOptions, Summary, TranscribeInput } from '../electron/shared.js';
+import { rememberScore } from './practice/history.js';
 import { Intro } from './screens/Intro.js';
 import { Practice } from './screens/Practice.js';
 import { Progress } from './screens/Progress.js';
@@ -65,11 +66,22 @@ export function App(): React.JSX.Element {
   const openScore = useCallback(async (file?: string) => {
     const reply = await window.app.openScore(file);
     if (reply.ok && reply.data) {
+      if (reply.data.path) rememberScore(reply.data.path, reply.data.title);
+      setError('');
       setPracticeTitle(reply.data.title);
       setReturnTo('intro');
       setScreen('practice');
     } else if (!reply.ok) {
       setError(reply.error ?? 'Noty se nepodařilo otevřít.');
+    }
+  }, []);
+
+  const openDemo = useCallback(async () => {
+    const reply = await window.app.practiceDemo();
+    if (reply.ok && reply.data) {
+      setPracticeTitle(reply.data.title);
+      setReturnTo('intro');
+      setScreen('practice');
     }
   }, []);
 
@@ -111,6 +123,7 @@ export function App(): React.JSX.Element {
       error={error}
       onVideo={(file) => void run(file, {}, DEFAULT_GRID)}
       onScore={(file) => void openScore(file)}
+      onDemo={() => void openDemo()}
     />
   );
 }

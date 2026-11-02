@@ -22,7 +22,7 @@ test('playing the score in order marks every note and reaches the end', () => {
   let t = 0;
   for (const m of [60, 62, 64, 48, 65]) f.play(m, (t += 0.3));
   assert.ok(f.finished);
-  assert.deepEqual(f.stats(), { hit: 5, missed: 0, wrong: 0, total: 5 });
+  assert.deepEqual(f.stats(), { hit: 5, missed: 0, unsure: 0, wrong: 0, total: 5 });
 });
 
 test('a chord from a keyboard waits for all its notes', () => {
@@ -122,4 +122,26 @@ test('seeking starts over from a chosen step', () => {
   assert.equal(f.position, 1);
   assert.equal(f.state('0.0'), 'hit', 'what lies before stays');
   assert.equal(f.state('1.0'), 'pending', 'what lies after is unplayed again');
+});
+
+test('a chord heard as a whole through a microphone leaves its unheard note unsure, not missed', () => {
+  const f = new ScoreFollower(score([60, 64, 67], 72), { input: 'audio' });
+  f.hear({ time: 1, notes: [{ midi: 60, expected: true }, { midi: 67, expected: true }] }, 1.1);
+  f.tick(3);
+  assert.equal(f.state('0.1'), 'unsure');
+  assert.equal(f.stats().missed, 0);
+  assert.equal(f.stats().unsure, 1);
+});
+
+test('results per measure name the measures that went wrong', () => {
+  const steps = score(60, 62, 64, 65).map((s, i) => ({ ...s, measure: i < 2 ? 0 : 1 }));
+  const f = new ScoreFollower(steps);
+  f.play(60, 1);
+  f.play(62, 1.2);
+  f.play(70, 1.3);
+  f.play(65, 1.6);
+  f.tick(3);
+  const [first, second] = f.byMeasure();
+  assert.deepEqual(first, { measure: 0, notes: 2, hit: 2, missed: 0, wrong: 0 });
+  assert.equal(second!.missed + second!.wrong, 2, 'the skipped E and the stray note');
 });

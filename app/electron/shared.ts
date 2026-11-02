@@ -56,6 +56,8 @@ export interface TranscribeInput {
 /** A score opened for playing from it. */
 export interface PracticeSource {
   title: string;
+  /** The file it came from; absent for a transcription. */
+  path?: string;
 }
 
 /** A score engraved for the window: one line of music per entry. */
@@ -73,6 +75,8 @@ export interface AppBridge {
   revealInFolder: (path: string) => Promise<Reply<void>>;
   /** Opens a MusicXML, MEI, ABC or MIDI file to play from; asks for one without a path. */
   openScore: (path?: string) => Promise<Reply<PracticeSource | null>>;
+  /** Opens the bundled demonstration piece. */
+  practiceDemo: () => Promise<Reply<PracticeSource>>;
   /** Plays from the score of the current transcription. */
   practiceCurrent: () => Promise<Reply<PracticeSource>>;
   practiceLayout: (width: number, scale: number) => Promise<Reply<PracticeLayout>>;

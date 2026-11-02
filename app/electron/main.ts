@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { basename, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { demoScore } from '../../src/core/demo.js';
 import { midiToMusicXml } from '../../src/core/import.js';
 import { writeMidi } from '../../src/core/midi.js';
 import { writeMusicXml } from '../../src/core/notation.js';
@@ -114,10 +115,10 @@ async function getPracticeToolkit(): Promise<Engraver> {
   return practiceToolkit;
 }
 
-function setPractice(title: string, data: string | ArrayBuffer): PracticeSource {
+function setPractice(title: string, data: string | ArrayBuffer, path?: string): PracticeSource {
   practice = { title, data };
   practiceLoaded = '';
-  return { title };
+  return path ? { title, path } : { title };
 }
 
 function toDataUrl(rgb: Uint8Array, width: number, height: number): string {
@@ -300,13 +301,22 @@ ipcMain.handle(
     const extension = extname(path).toLowerCase();
     const bytes = await readFile(path);
     if (extension === '.mid' || extension === '.midi') {
-      return setPractice(title, midiToMusicXml(new Uint8Array(bytes), title));
+      return setPractice(title, midiToMusicXml(new Uint8Array(bytes), title), path);
     }
     if (extension === '.mxl') {
-      return setPractice(title, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+      return setPractice(
+        title,
+        bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+        path,
+      );
     }
-    return setPractice(title, bytes.toString('utf8'));
+    return setPractice(title, bytes.toString('utf8'), path);
   }),
+);
+
+ipcMain.handle(
+  'app:practice-demo',
+  wrap((): PracticeSource => setPractice('Óda na radost', demoScore())),
 );
 
 ipcMain.handle(

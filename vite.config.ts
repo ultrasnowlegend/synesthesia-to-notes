@@ -1,4 +1,6 @@
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import electron from 'vite-plugin-electron';
 import renderer from 'vite-plugin-electron-renderer';
@@ -10,9 +12,12 @@ import renderer from 'vite-plugin-electron-renderer';
  */
 export default defineConfig({
   root: 'app',
+  base: './',
   build: { outDir: '../dist-app', emptyOutDir: true },
+  resolve: { alias: { '@': fileURLToPath(new URL('./app/src', import.meta.url)) } },
   plugins: [
     react(),
+    tailwindcss(),
     electron([
       {
         entry: 'electron/main.ts',

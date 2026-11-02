@@ -1,4 +1,26 @@
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  FileDown,
+  FileMusic,
+  Gauge,
+  Music,
+  Play,
+  RefreshCw,
+  ScanLine,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { Hint } from '@/components/ui/tooltip';
+import { ThemeToggle } from '@/lib/theme';
 
 import type { GridOptions, Summary, TranscribeInput } from '../../electron/shared.js';
 
@@ -21,7 +43,7 @@ const DIVISIONS = [
 
 const TIME_SIGNATURES = ['4/4', '3/4', '2/4', '6/8', '5/4'];
 
-function Slider({
+function Field({
   label,
   value,
   min,
@@ -38,22 +60,26 @@ function Slider({
   unit?: string;
   onChange: (v: number) => void;
 }): React.JSX.Element {
+  // The score is redrawn when the thumb is let go, not on every pixel.
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
   return (
-    <div className="row">
-      <label htmlFor={`s-${label}`}>{label}</label>
-      <span className="value">
-        {value.toFixed(step < 1 ? 2 : 0)}
-        {unit ? ` ${unit}` : ''}
-      </span>
-      <input
-        id={`s-${label}`}
-        className="slider"
-        type="range"
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label>{label}</Label>
+        <span className="text-sm font-semibold tabular-nums">
+          {draft.toFixed(step < 1 ? 2 : 0)}
+          {unit ? ` ${unit}` : ''}
+        </span>
+      </div>
+      <Slider
         min={min}
         max={max}
         step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
+        value={[draft]}
+        onValueChange={([v]) => setDraft(v ?? value)}
+        onValueCommit={([v]) => onChange(v ?? value)}
+        aria-label={label}
       />
     </div>
   );
@@ -62,7 +88,7 @@ function Slider({
 export function Result({ summary, grid, onGrid, onRerun, onNew, onPractice }: Props): React.JSX.Element {
   const [page, setPage] = useState(1);
   const [svg, setSvg] = useState('');
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [edges, setEdges] = useState<[number, number]>([summary.topEdge, summary.bottomEdge]);
   const [firstMidi, setFirstMidi] = useState(summary.firstMidi);
   const [threshold, setThreshold] = useState(summary.threshold);
@@ -78,217 +104,232 @@ export function Result({ summary, grid, onGrid, onRerun, onNew, onPractice }: Pr
   }, [page, summary.pages, summary.notes, summary.tempo.bpm]);
 
   const save = async (kind: 'midi' | 'musicxml' | 'pdf'): Promise<void> => {
-    setMessage('');
+    setMessage(null);
     const r = await window.app.save(kind);
-    if (r.ok && r.data) setMessage(`Uloženo: ${r.data}`);
-    else if (!r.ok) setMessage(r.error ?? 'Uložení se nepodařilo.');
+    if (r.ok && r.data) setMessage({ text: `Uloženo: ${r.data}`, ok: true });
+    else if (!r.ok) setMessage({ text: r.error ?? 'Uložení se nepodařilo.', ok: false });
   };
 
-  const syncClass =
-    summary.sync.precision >= 0.85 ? 'good' : summary.sync.precision > 0 ? 'weak' : '';
+  const agreement = Math.round(summary.sync.precision * 100);
   const fileName = summary.video.split(/[\\/]/).pop() ?? summary.video;
+  const pages = Math.max(1, summary.pages);
 
   return (
-    <div className="result">
-      <div className="topbar">
-        <span className="name" title={summary.video}>
+    <div className="grid h-full grid-rows-[auto_1fr]">
+      <header className="flex flex-wrap items-center gap-3 border-b bg-card px-4 py-2.5">
+        <Hint label="Jiné video">
+          <Button variant="ghost" size="icon" onClick={onNew} aria-label="Jiné video">
+            <ArrowLeft />
+          </Button>
+        </Hint>
+        <span className="max-w-72 truncate font-semibold" title={summary.video}>
           {fileName}
         </span>
-        <div className="chips">
-          <span className="chip">
-            <b>{summary.keys}</b> kláves
-          </span>
-          <span className="chip">
-            <b>{summary.events}</b> not
-          </span>
-          <span className="chip">
-            <b>{summary.keyName}</b>
-          </span>
-          <span className={`chip ${syncClass}`}>
-            shoda se zvukem <b>{Math.round(summary.sync.precision * 100)} %</b>
-          </span>
-          <span className="chip">
-            levá ruka{' '}
-            <b>{Math.round((summary.leftHandNotes / Math.max(1, summary.events)) * 100)} %</b>
-          </span>
-          {summary.octaveShift !== 0 && (
-            <span className="chip">
-              oktáva opravena o <b>{summary.octaveShift}</b>
-            </span>
-          )}
+        <div className="flex flex-1 flex-wrap gap-1.5">
+          <Badge variant="secondary">{summary.keys} kláves</Badge>
+          <Badge variant="secondary">{summary.events} not</Badge>
+          <Badge variant="secondary">{summary.keyName}</Badge>
+          <Hint label="Kolik úderů z obrazu sedí na údery ve zvuku — míra jistoty přepisu">
+            <Badge variant={agreement >= 85 ? 'success' : agreement > 0 ? 'destructive' : 'secondary'}>
+              shoda se zvukem {agreement} %
+            </Badge>
+          </Hint>
+          <Badge variant="secondary">
+            levá ruka {Math.round((summary.leftHandNotes / Math.max(1, summary.events)) * 100)} %
+          </Badge>
+          {summary.octaveShift !== 0 && <Badge variant="outline">oktáva opravena o {summary.octaveShift}</Badge>}
         </div>
-        <button className="primary" onClick={onPractice} title="Noty přes celé okno, s poslechem a otáčením">
-          Hrát z not
-        </button>
-        <button onClick={onNew}>Jiné video</button>
-      </div>
+        <ThemeToggle />
+        <Button onClick={onPractice}>
+          <Play aria-hidden /> Hrát z not
+        </Button>
+      </header>
 
-      <div className="body">
-        <div className="panel">
-          <div className="group">
-            <h3>Mřížka</h3>
-            <Slider
-              label="Tempo"
-              value={grid.bpm ?? summary.tempo.bpm}
-              min={40}
-              max={200}
-              step={0.25}
-              unit="BPM"
-              onChange={(v) => onGrid({ ...grid, bpm: v })}
-            />
-            <Slider
-              label="Posun"
-              value={grid.offset ?? summary.tempo.offset}
-              min={0}
-              max={4}
-              step={0.01}
-              unit="s"
-              onChange={(v) => onGrid({ ...grid, offset: v })}
-            />
-            <div className="row">
-              <label htmlFor="division">Dělení doby</label>
-              <select
-                id="division"
-                style={{ width: '11rem' }}
-                value={grid.division ?? 4}
-                onChange={(e) => onGrid({ ...grid, division: Number(e.target.value) })}
-              >
-                {DIVISIONS.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
+      <div className="grid min-h-0 grid-cols-[22rem_1fr]">
+        <aside className="space-y-4 overflow-y-auto border-r bg-card/50 p-4">
+          <Card className="gap-4 py-4">
+            <CardHeader className="px-4">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Gauge className="size-4 text-primary" aria-hidden /> Mřížka
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5 px-4">
+              <Field
+                label="Tempo"
+                value={grid.bpm ?? summary.tempo.bpm}
+                min={40}
+                max={200}
+                step={0.25}
+                unit="BPM"
+                onChange={(v) => onGrid({ ...grid, bpm: v })}
+              />
+              <Field
+                label="Posun první doby"
+                value={grid.offset ?? summary.tempo.offset}
+                min={0}
+                max={4}
+                step={0.01}
+                unit="s"
+                onChange={(v) => onGrid({ ...grid, offset: v })}
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Dělení doby</Label>
+                  <Select
+                    value={String(grid.division ?? 4)}
+                    onValueChange={(v) => onGrid({ ...grid, division: Number(v) })}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DIVISIONS.map((d) => (
+                        <SelectItem key={d.value} value={String(d.value)}>
+                          {d.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Takt</Label>
+                  <Select
+                    value={`${grid.numerator ?? 4}/${grid.denominator ?? 4}`}
+                    onValueChange={(v) => {
+                      const [n, d] = v.split('/');
+                      onGrid({ ...grid, numerator: Number(n), denominator: Number(d) });
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIME_SIGNATURES.map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Field
+                label="Legato"
+                value={grid.legato ?? 1}
+                min={0}
+                max={2}
+                step={0.25}
+                unit="doby"
+                onChange={(v) => onGrid({ ...grid, legato: v })}
+              />
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Legato vyplní krátké mezery prodlouženým tónem místo pomlky. Nula zachová naměřené délky
+                doslova, což u improvizace vede na les pomlk.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="gap-3 py-4">
+            <CardHeader className="px-4">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Music className="size-4 text-primary" aria-hidden /> Nalezené noty
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 px-4">
+              <img
+                className="w-full rounded-md border [image-rendering:pixelated]"
+                src={summary.rollPreview}
+                alt="Klavírní rolka nalezených not"
+              />
+              <p className="text-xs text-muted-foreground">Celá nahrávka, zlatě pravá ruka, zeleně levá. Vodorovné linky jsou C.</p>
+            </CardContent>
+          </Card>
+
+          <Card className="gap-3 py-4">
+            <CardHeader className="px-4">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <ScanLine className="size-4 text-primary" aria-hidden /> Kalibrace
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 px-4">
+              <img
+                className="w-full rounded-md border [image-rendering:pixelated]"
+                src={summary.calibrationPreview}
+                alt="Klaviatura s vyznačenými klávesami"
+              />
+              <p className="text-xs text-muted-foreground">
+                Značky musí ležet na klávesách a fialové svislice u každého C. Když nesedí, zadej hrany ručně a
+                přepočítej.
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {(
+                  [
+                    ['top', 'Horní hrana', edges[0], (v: number) => setEdges([v, edges[1]])],
+                    ['bottom', 'Dolní hrana', edges[1], (v: number) => setEdges([edges[0], v])],
+                    ['first', 'Nejnižší bílá', firstMidi, setFirstMidi],
+                  ] as const
+                ).map(([id, label, value, set]) => (
+                  <div key={id} className="space-y-1.5">
+                    <Label htmlFor={id} className="text-xs">
+                      {label}
+                    </Label>
+                    <Input id={id} type="number" value={value} onChange={(e) => set(Number(e.target.value))} />
+                  </div>
                 ))}
-              </select>
-            </div>
-            <div className="row">
-              <label htmlFor="time">Takt</label>
-              <select
-                id="time"
-                style={{ width: '11rem' }}
-                value={`${grid.numerator ?? 4}/${grid.denominator ?? 4}`}
-                onChange={(e) => {
-                  const [n, d] = e.target.value.split('/');
-                  onGrid({ ...grid, numerator: Number(n), denominator: Number(d) });
-                }}
+              </div>
+              <Field label="Práh detekce" value={threshold} min={0.05} max={0.5} step={0.01} onChange={setThreshold} />
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() =>
+                  onRerun({
+                    keyboard: { topEdge: edges[0], bottomEdge: edges[1], firstMidi },
+                    detection: { threshold },
+                  })
+                }
               >
-                {TIME_SIGNATURES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Slider
-              label="Legato"
-              value={grid.legato ?? 1}
-              min={0}
-              max={2}
-              step={0.25}
-              unit="doby"
-              onChange={(v) => onGrid({ ...grid, legato: v })}
-            />
-            <p className="hint">
-              Legato vyplní krátké mezery prodlouženým tónem místo pomlky. Nula zachová
-              naměřené délky doslova, což u improvizace vede na les pomlk.
-            </p>
-          </div>
+                <RefreshCw aria-hidden /> Přepočítat z videa
+              </Button>
+            </CardContent>
+          </Card>
+        </aside>
 
-          <div className="group">
-            <h3>Nalezené noty</h3>
-            <img className="preview" src={summary.rollPreview} alt="Klavírní rolka nalezených not" />
-            <p className="hint">
-              Celá nahrávka, zlatě pravá ruka, zeleně levá. Vodorovné linky jsou C.
-            </p>
-          </div>
-
-          <div className="group">
-            <h3>Kalibrace</h3>
-            <img
-              className="preview"
-              src={summary.calibrationPreview}
-              alt="Klaviatura s vyznačenými klávesami"
+        <section className="grid min-h-0 grid-rows-[1fr_auto] bg-stage">
+          <div className="overflow-auto p-6">
+            <div
+              className="mx-auto w-full max-w-4xl rounded-md bg-paper shadow-xl ring-1 ring-black/5 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full"
+              dangerouslySetInnerHTML={{ __html: svg }}
             />
-            <p className="hint">
-              Značky musí ležet na klávesách a fialové svislice u každého C. Když nesedí,
-              zadej hrany ručně a přepočítej.
-            </p>
-            <div className="row" style={{ marginTop: '0.7rem' }}>
-              <label htmlFor="top">Horní hrana</label>
-              <input
-                id="top"
-                type="number"
-                style={{ width: '6rem' }}
-                value={edges[0]}
-                onChange={(e) => setEdges([Number(e.target.value), edges[1]])}
-              />
-            </div>
-            <div className="row">
-              <label htmlFor="bottom">Dolní hrana</label>
-              <input
-                id="bottom"
-                type="number"
-                style={{ width: '6rem' }}
-                value={edges[1]}
-                onChange={(e) => setEdges([edges[0], Number(e.target.value)])}
-              />
-            </div>
-            <div className="row">
-              <label htmlFor="first">Nejnižší bílá (MIDI)</label>
-              <input
-                id="first"
-                type="number"
-                style={{ width: '6rem' }}
-                value={firstMidi}
-                onChange={(e) => setFirstMidi(Number(e.target.value))}
-              />
-            </div>
-            <Slider
-              label="Práh detekce"
-              value={threshold}
-              min={0.05}
-              max={0.5}
-              step={0.01}
-              onChange={setThreshold}
-            />
-            <button
-              style={{ width: '100%', marginTop: '0.6rem' }}
-              onClick={() =>
-                onRerun({
-                  keyboard: { topEdge: edges[0], bottomEdge: edges[1], firstMidi },
-                  detection: { threshold },
-                })
-              }
-            >
-              Přepočítat z videa
-            </button>
           </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateRows: '1fr auto', minHeight: 0 }}>
-          <div className="score">
-            <div className="sheet" dangerouslySetInnerHTML={{ __html: svg }} />
-          </div>
-          <div className="footer">
-            <div className="pager">
-              <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                ←
-              </button>
-              <span>
-                strana {Math.min(page, summary.pages)} z {summary.pages}
+          <footer className="flex flex-wrap items-center gap-2 border-t bg-card px-4 py-2.5">
+            <div className="flex items-center gap-1">
+              <Button variant="outline" size="icon-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} aria-label="Předchozí strana">
+                <ChevronLeft />
+              </Button>
+              <span className="px-2 text-sm tabular-nums text-muted-foreground">
+                strana {Math.min(page, pages)} z {pages}
               </span>
-              <button disabled={page >= summary.pages} onClick={() => setPage((p) => p + 1)}>
-                →
-              </button>
+              <Button variant="outline" size="icon-sm" disabled={page >= pages} onClick={() => setPage((p) => p + 1)} aria-label="Další strana">
+                <ChevronRight />
+              </Button>
             </div>
-            <span className="spacer" />
-            {message && <span className="message">{message}</span>}
-            <button onClick={() => void save('midi')}>Uložit MIDI</button>
-            <button onClick={() => void save('musicxml')}>Uložit MusicXML</button>
-            <button className="primary" onClick={() => void save('pdf')}>
-              Uložit PDF
-            </button>
-          </div>
-        </div>
+            <div className="flex-1" />
+            {message && (
+              <span className={message.ok ? 'text-sm text-success' : 'text-sm text-destructive'} role="status">
+                {message.text}
+              </span>
+            )}
+            <Button variant="outline" onClick={() => void save('midi')}>
+              <FileMusic aria-hidden /> MIDI
+            </Button>
+            <Button variant="outline" onClick={() => void save('musicxml')}>
+              <FileMusic aria-hidden /> MusicXML
+            </Button>
+            <Button onClick={() => void save('pdf')}>
+              <FileDown aria-hidden /> Uložit PDF
+            </Button>
+          </footer>
+        </section>
       </div>
     </div>
   );

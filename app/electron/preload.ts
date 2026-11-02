@@ -11,6 +11,7 @@ const bridge: AppBridge = {
   revealInFolder: (path) => ipcRenderer.invoke('app:reveal', path),
   openScore: (path) => ipcRenderer.invoke('app:open-score', path),
   practiceCurrent: () => ipcRenderer.invoke('app:practice-current'),
+  practiceDemo: () => ipcRenderer.invoke('app:practice-demo'),
   practiceLayout: (width, scale) => ipcRenderer.invoke('app:practice-layout', width, scale),
   microphoneAccess: () => ipcRenderer.invoke('app:microphone-access'),
   filePath: (file) => webUtils.getPathForFile(file),

@@ -25,6 +25,8 @@ export interface ScoreNote {
   midi: number;
   /** Staff the note is written on, from 1 at the top. */
   staff: number;
+  /** How long it sounds at the written tempo, in milliseconds, ties included. */
+  duration?: number;
 }
 
 export interface ScoreStep {
@@ -34,10 +36,26 @@ export interface ScoreStep {
   time: number;
   /** The line of music (system) the step is drawn on, from 0. */
   system: number;
+  /** The measure the step lies in, from 0. */
+  measure?: number;
   notes: ScoreNote[];
 }
 
-export type NoteState = 'pending' | 'hit' | 'missed' | 'skipped';
+/** How one measure went: for finding the places that need practice. */
+export interface MeasureStats {
+  measure: number;
+  notes: number;
+  hit: number;
+  missed: number;
+  wrong: number;
+}
+
+/**
+ * `unsure` is a microphone's honest answer for a note of a chord that was
+ * clearly played as a whole but whose every note it could not pick out —
+ * neither praised nor counted as a mistake.
+ */
+export type NoteState = 'pending' | 'hit' | 'missed' | 'unsure' | 'skipped';
 
 export type InputKind = 'midi' | 'audio';
 
@@ -79,6 +97,8 @@ export interface HeardStrike {
 export interface FollowStats {
   hit: number;
   missed: number;
+  /** Notes of chords heard as a whole, but not one by one. */
+  unsure: number;
   wrong: number;
   /** Notes the player is expected to play in the whole score. */
   total: number;
@@ -106,6 +126,8 @@ export class ScoreFollower {
   private candidate: Candidate | null = null;
   private position_ = 0;
   private wrong = 0;
+  /** Wrong notes counted against the measure the finger was in. */
+  private wrongIn = new Map<number, number>();
   /** The strike that last moved the finger forward, when the input tells strikes apart. */
   private movedBy: number | null = null;
   /** Strikes in a row that fitted nowhere near the finger. */
@@ -167,6 +189,7 @@ export class ScoreFollower {
   stats(): FollowStats {
     let hit = 0;
     let missed = 0;
+    let unsure = 0;
     let total = 0;
     for (const list of this.required) {
       for (const n of list) {
@@ -174,9 +197,35 @@ export class ScoreFollower {
         const s = this.states.get(n.id);
         if (s === 'hit') hit++;
         else if (s === 'missed') missed++;
+        else if (s === 'unsure') unsure++;
       }
     }
-    return { hit, missed, wrong: this.wrong, total };
+    return { hit, missed, unsure, wrong: this.wrong, total };
+  }
+
+  /** Results per measure, in order; measures without notes to play are left out. */
+  byMeasure(from = 0, to = this.steps.length - 1): MeasureStats[] {
+    const out = new Map<number, MeasureStats>();
+    for (let i = Math.max(0, from); i <= Math.min(to, this.steps.length - 1); i++) {
+      const measure = this.steps[i]!.measure ?? 0;
+      let m = out.get(measure);
+      if (!m) {
+        m = { measure, notes: 0, hit: 0, missed: 0, wrong: this.wrongIn.get(measure) ?? 0 };
+        out.set(measure, m);
+      }
+      for (const n of this.required[i]!) {
+        m.notes++;
+        const s = this.states.get(n.id);
+        if (s === 'hit') m.hit++;
+        else if (s === 'missed') m.missed++;
+      }
+    }
+    return [...out.values()].filter((m) => m.notes > 0).sort((a, b) => a.measure - b.measure);
+  }
+
+  /** Notes on the staves being played in a step; the others are only drawn. */
+  requiredIn(index: number): readonly ScoreNote[] {
+    return this.required[index] ?? [];
   }
 
   /**
@@ -225,7 +274,10 @@ export class ScoreFollower {
         this.states.set(n.id, next);
       }
     }
-    if (target === 0) this.wrong = 0;
+    if (target === 0) {
+      this.wrong = 0;
+      this.wrongIn.clear();
+    }
     this.open = [];
     this.candidate = null;
     this.movedBy = null;
@@ -352,6 +404,8 @@ export class ScoreFollower {
 
     if (canBeWrong) {
       this.wrong++;
+      const measure = this.current?.measure ?? 0;
+      this.wrongIn.set(measure, (this.wrongIn.get(measure) ?? 0) + 1);
       change.wrong = midi;
     }
     return change;
@@ -529,9 +583,13 @@ export class ScoreFollower {
         keep.push(o);
         continue;
       }
-      for (const n of this.required[o.index] ?? []) {
+      const list = this.required[o.index] ?? [];
+      // Through a microphone, a chord heard as a whole was played as a whole.
+      const heardAsChord =
+        this.options.input === 'audio' && list.some((n) => this.state(n.id) === 'hit') && this.complete(o.index);
+      for (const n of list) {
         if (this.state(n.id) === 'pending') {
-          this.states.set(n.id, 'missed');
+          this.states.set(n.id, heardAsChord ? 'unsure' : 'missed');
           change.changed.push(n.id);
         }
       }

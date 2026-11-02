@@ -5,6 +5,8 @@ export interface KeyboardHandle {
   expect: (midis: readonly number[]) => void;
   /** Lights a key up for a moment: green when it fitted, red when it did not. */
   flash: (midi: number, kind: 'ok' | 'wrong') => void;
+  /** Marks the keys the demonstration is sounding now. */
+  sounding: (midis: readonly number[]) => void;
 }
 
 const LOWEST = 21;
@@ -20,6 +22,7 @@ export function Keyboard({ ref }: { ref?: React.Ref<KeyboardHandle> }): React.JS
   const svgRef = useRef<SVGSVGElement>(null);
   const keys = useRef(new Map<number, SVGRectElement>());
   const due = useRef<number[]>([]);
+  const playing = useRef<number[]>([]);
   const timers = useRef(new Map<number, number>());
 
   useImperativeHandle(ref, () => ({
@@ -27,6 +30,11 @@ export function Keyboard({ ref }: { ref?: React.Ref<KeyboardHandle> }): React.JS
       for (const m of due.current) keys.current.get(m)?.classList.remove('due');
       due.current = [...midis];
       for (const m of due.current) keys.current.get(m)?.classList.add('due');
+    },
+    sounding: (midis) => {
+      for (const m of playing.current) keys.current.get(m)?.classList.remove('sounding');
+      playing.current = [...midis];
+      for (const m of playing.current) keys.current.get(m)?.classList.add('sounding');
     },
     flash: (midi, kind) => {
       const key = keys.current.get(midi);
@@ -81,7 +89,7 @@ export function Keyboard({ ref }: { ref?: React.Ref<KeyboardHandle> }): React.JS
   }, []);
 
   return (
-    <div className="keyboard">
+    <div className="piano-strip h-full">
       <svg ref={svgRef} viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true" />
     </div>
   );

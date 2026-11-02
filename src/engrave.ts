@@ -29,6 +29,10 @@ export interface ScreenLayout {
   steps: ScoreStep[];
   /** Staff numbers that hold notes, from the top. */
   staves: number[];
+  /** Every measure in order: its drawn id and the line it is on. */
+  measures: { id: string; system: number }[];
+  /** The written tempo at the start, in quarter notes per minute. */
+  bpm: number;
 }
 
 /** Verovio options for lines `width` pixels wide at a given scale (percent). */
@@ -81,12 +85,16 @@ export function layoutForScreen(
     const size = /<svg[^>]*\bwidth="([\d.]+)px"[^>]*\bheight="([\d.]+)px"/.exec(svg);
     systems.push({ svg, width: Number(size?.[1] ?? width), height: Number(size?.[2] ?? 200) });
   }
-  const timemap = toolkit.renderToTimemap({ includeMeasures: false });
+  const timemap = toolkit.renderToTimemap({ includeMeasures: true });
   const steps = buildSteps(timemap, {
     pitch: (id) => toolkit.getMIDIValuesForElement(id)?.pitch ?? null,
     system: (id) => Math.max(0, toolkit.getPageWithElement(id) - 1),
     facts: readMeiFacts(toolkit.getMEI()),
   });
   const staves = [...new Set(steps.flatMap((s) => s.notes.map((n) => n.staff)))].sort((a, b) => a - b);
-  return { title, systems, steps, staves };
+  const measures = timemap
+    .filter((e) => e.measureOn)
+    .map((e) => ({ id: e.measureOn!, system: Math.max(0, toolkit.getPageWithElement(e.measureOn!) - 1) }));
+  const bpm = timemap.find((e) => e.tempo)?.tempo ?? 100;
+  return { title, systems, steps, staves, measures, bpm };
 }

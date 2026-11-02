@@ -172,6 +172,8 @@ function writeNote(
   valueCount: number,
   staff: number,
   fifths: number,
+  beams: readonly string[] = [],
+  tuplet: 'start' | 'stop' | null = null,
 ): string {
   const lines: string[] = [];
   const tieBack = f.tiesBack || valueIndex > 0;
@@ -184,7 +186,18 @@ function writeNote(
     lines.push(`        <voice>${staff}</voice>`);
     lines.push(`        <type>${value.type}</type>`);
     for (let i = 0; i < value.dots; i++) lines.push('        <dot/>');
+    if (value.triplet) {
+      lines.push('        <time-modification>');
+      lines.push('          <actual-notes>3</actual-notes>');
+      lines.push('          <normal-notes>2</normal-notes>');
+      lines.push('        </time-modification>');
+    }
     lines.push(`        <staff>${staff}</staff>`);
+    if (tuplet) {
+      lines.push('        <notations>');
+      lines.push(`          <tuplet type="${tuplet}" bracket="no"/>`);
+      lines.push('        </notations>');
+    }
     lines.push('      </note>');
     return lines.join('\n');
   }
@@ -213,10 +226,15 @@ function writeNote(
       lines.push('        </time-modification>');
     }
     lines.push(`        <staff>${staff}</staff>`);
-    if (tieBack || tieForward) {
+    // Beams belong to the chord; they are written once, on its first note.
+    if (i === 0) for (const b of beams) lines.push(`        ${b}`);
+    const marks: string[] = [];
+    if (tieBack) marks.push('          <tied type="stop"/>');
+    if (tieForward) marks.push('          <tied type="start"/>');
+    if (i === 0 && tuplet) marks.push(`          <tuplet type="${tuplet}" bracket="no"/>`);
+    if (marks.length > 0) {
       lines.push('        <notations>');
-      if (tieBack) lines.push('          <tied type="stop"/>');
-      if (tieForward) lines.push('          <tied type="start"/>');
+      lines.push(...marks);
       lines.push('        </notations>');
     }
     lines.push('      </note>');
@@ -224,15 +242,105 @@ function writeNote(
   return lines.join('\n');
 }
 
-function writeFragments(fragments: readonly Fragment[], staff: number, fifths: number): string {
-  const out: string[] = [];
+interface Written {
+  fragment: Fragment;
+  value: NoteValue;
+  index: number;
+  count: number;
+  start: number;
+}
+
+/**
+ * Beams for one bar of one staff. Eighths and shorter are joined within a
+ * beat — a dotted quarter in compound time — so the beats can be read at a
+ * glance; a rest, a longer note or a beat boundary breaks the beam. Without
+ * beams every quaver carries its own flag and a passage of sixteenths turns
+ * into a picket fence nobody can sight-read.
+ */
+function beamsFor(written: readonly Written[], beat: number): string[][] {
+  const out: string[][] = written.map(() => []);
+  const beamable = (w: Written): boolean => w.fragment.notes.length > 0 && w.value.divisions < 24 && w.value.type !== 'quarter';
+  let i = 0;
+  while (i < written.length) {
+    if (!beamable(written[i]!)) {
+      i++;
+      continue;
+    }
+    const group = Math.floor(written[i]!.start / beat);
+    let j = i;
+    while (
+      j + 1 < written.length &&
+      beamable(written[j + 1]!) &&
+      Math.floor(written[j + 1]!.start / beat) === group &&
+      written[j + 1]!.start + written[j + 1]!.value.divisions <= (group + 1) * beat
+    ) {
+      j++;
+    }
+    if (j > i) {
+      for (let k = i; k <= j; k++) {
+        out[k]!.push(`<beam number="1">${k === i ? 'begin' : k === j ? 'end' : 'continue'}</beam>`);
+      }
+      // A second beam joins neighbouring sixteenths; a lone one gets a hook.
+      const fine = (k: number): boolean => written[k]!.value.divisions <= 9 && written[k]!.value.type !== 'eighth';
+      let k = i;
+      while (k <= j) {
+        if (!fine(k)) {
+          k++;
+          continue;
+        }
+        let m = k;
+        while (m + 1 <= j && fine(m + 1)) m++;
+        if (m > k) {
+          for (let q = k; q <= m; q++) {
+            out[q]!.push(`<beam number="2">${q === k ? 'begin' : q === m ? 'end' : 'continue'}</beam>`);
+          }
+        } else {
+          out[k]!.push(`<beam number="2">${k === j ? 'backward hook' : 'forward hook'}</beam>`);
+        }
+        k = m + 1;
+      }
+    }
+    i = j + 1;
+  }
+  return out;
+}
+
+/** Marks where each run of triplets within a beat begins and ends, for its "3". */
+function tupletsFor(written: readonly Written[], beat: number): ('start' | 'stop' | null)[] {
+  const out: ('start' | 'stop' | null)[] = written.map(() => null);
+  let i = 0;
+  while (i < written.length) {
+    if (!written[i]!.value.triplet) {
+      i++;
+      continue;
+    }
+    const group = Math.floor(written[i]!.start / beat);
+    let j = i;
+    while (j + 1 < written.length && written[j + 1]!.value.triplet && Math.floor(written[j + 1]!.start / beat) === group) j++;
+    if (j > i) {
+      out[i] = 'start';
+      out[j] = 'stop';
+    }
+    i = j + 1;
+  }
+  return out;
+}
+
+function writeFragments(fragments: readonly Fragment[], staff: number, fifths: number, beat = 24): string {
+  const written: Written[] = [];
   for (const f of fragments) {
     const values = splitLength(f.length);
-    for (let i = 0; i < values.length; i++) {
-      out.push(writeNote(f, values[i]!, i, values.length, staff, fifths));
-    }
+    let start = f.start;
+    values.forEach((value, index) => {
+      written.push({ fragment: f, value, index, count: values.length, start });
+      start += value.divisions;
+    });
   }
-  return out.join('\n');
+  const beams = beamsFor(written, beat);
+  const tuplets = tupletsFor(written, beat);
+  return written
+    .map((w, i) => writeNote(w.fragment, w.value, w.index, w.count, staff, fifths, beams[i], tuplets[i]))
+    .join('\n');
 }
 
 /** Produces MusicXML for a piano with two staves. */
@@ -264,6 +372,8 @@ export function writeMusicXml(
   const left = notes.filter((n) => staffOf(n) === 'left').map(toTicks);
 
   const barLength = Math.round((tempo.numerator * 4 * DIVISIONS_PER_BEAT) / tempo.denominator);
+  const compound = tempo.denominator === 8 && tempo.numerator % 3 === 0;
+  const beat = compound ? (DIVISIONS_PER_BEAT * 3) / 2 : DIVISIONS_PER_BEAT;
   const lastTick = Math.max(
     barLength,
     ...right.map((n) => n.start + n.length),
@@ -296,7 +406,8 @@ export function writeMusicXml(
   parts.push('  </identification>');
   parts.push('  <part-list>');
   parts.push('    <score-part id="P1">');
-  parts.push('      <part-name>Piano</part-name>');
+  // A solo piano needs no instrument name at the start of the first line.
+  parts.push('      <part-name print-object="no">Piano</part-name>');
   parts.push('    </score-part>');
   parts.push('  </part-list>');
   parts.push('  <part id="P1">');
@@ -327,9 +438,9 @@ export function writeMusicXml(
       parts.push(`        <sound tempo="${Math.round(tempo.bpm)}"/>`);
       parts.push('      </direction>');
     }
-    parts.push(writeFragments(rightBars[i] ?? emptyBar(i), 1, fifths));
+    parts.push(writeFragments(rightBars[i] ?? emptyBar(i), 1, fifths, beat));
     parts.push(`      <backup><duration>${barLength}</duration></backup>`);
-    parts.push(writeFragments(leftBars[i] ?? emptyBar(i), 2, fifths));
+    parts.push(writeFragments(leftBars[i] ?? emptyBar(i), 2, fifths, beat));
     parts.push('    </measure>');
   }
 
