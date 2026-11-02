@@ -17,3 +17,5 @@ export * from './evaluation.js';
 export * from './octave.js';
 export * from './onsets.js';
 export * from './sync.js';
+export * from './listen.js';
+export * from './follow.js';
