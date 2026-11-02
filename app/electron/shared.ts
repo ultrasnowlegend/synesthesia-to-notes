@@ -1,6 +1,7 @@
 import type { DetectionOptions } from '../../src/core/detection.js';
 import type { KeyboardOptions } from '../../src/core/keyboard.js';
 import type { AudioSync } from '../../src/core/sync.js';
+import type { ScreenLayout } from '../../src/engrave.js';
 import type { TempoOptions } from '../../src/core/tempo.js';
 import type { Tempo } from '../../src/core/types.js';
 
@@ -52,6 +53,14 @@ export interface TranscribeInput {
   detection?: DetectionOptions;
 }
 
+/** A score opened for playing from it. */
+export interface PracticeSource {
+  title: string;
+}
+
+/** A score engraved for the window: one line of music per entry. */
+export type PracticeLayout = ScreenLayout;
+
 export interface AppBridge {
   pickVideo: () => Promise<Reply<string | null>>;
   transcribe: (
@@ -62,6 +71,13 @@ export interface AppBridge {
   page: (number: number) => Promise<Reply<string>>;
   save: (kind: 'midi' | 'musicxml' | 'pdf') => Promise<Reply<string | null>>;
   revealInFolder: (path: string) => Promise<Reply<void>>;
+  /** Opens a MusicXML, MEI, ABC or MIDI file to play from; asks for one without a path. */
+  openScore: (path?: string) => Promise<Reply<PracticeSource | null>>;
+  /** Plays from the score of the current transcription. */
+  practiceCurrent: () => Promise<Reply<PracticeSource>>;
+  practiceLayout: (width: number, scale: number) => Promise<Reply<PracticeLayout>>;
+  /** Asks the system for the microphone where it has to be asked. */
+  microphoneAccess: () => Promise<Reply<boolean>>;
   /** Path of a dropped file; newer Electron no longer exposes File.path. */
   filePath: (file: File) => string;
   onStatus: (listener: (message: string) => void) => () => void;

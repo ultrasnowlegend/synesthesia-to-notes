@@ -2,10 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { GridOptions, Summary, TranscribeInput } from '../electron/shared.js';
 import { Intro } from './screens/Intro.js';
+import { Practice } from './screens/Practice.js';
 import { Progress } from './screens/Progress.js';
 import { Result } from './screens/Result.js';
 
-export type Screen = 'intro' | 'progress' | 'result';
+export type Screen = 'intro' | 'progress' | 'result' | 'practice';
 
 const DEFAULT_GRID: GridOptions = { division: 4, numerator: 4, denominator: 4, legato: 1 };
 
@@ -16,6 +17,8 @@ export function App(): React.JSX.Element {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [grid, setGrid] = useState<GridOptions>(DEFAULT_GRID);
   const [error, setError] = useState('');
+  const [practiceTitle, setPracticeTitle] = useState('');
+  const [returnTo, setReturnTo] = useState<Screen>('intro');
   const manual = useRef<TranscribeInput>({});
 
   useEffect(() => window.app.onStatus((m) => setLines((r) => [...r, m])), []);
@@ -59,6 +62,37 @@ export function App(): React.JSX.Element {
     }
   }, []);
 
+  const openScore = useCallback(async (file?: string) => {
+    const reply = await window.app.openScore(file);
+    if (reply.ok && reply.data) {
+      setPracticeTitle(reply.data.title);
+      setReturnTo('intro');
+      setScreen('practice');
+    } else if (!reply.ok) {
+      setError(reply.error ?? 'Noty se nepodařilo otevřít.');
+    }
+  }, []);
+
+  const practiseCurrent = useCallback(async () => {
+    const reply = await window.app.practiceCurrent();
+    if (reply.ok && reply.data) {
+      setPracticeTitle(reply.data.title);
+      setReturnTo('result');
+      setScreen('practice');
+    }
+  }, []);
+
+  if (screen === 'practice') {
+    return (
+      <Practice
+        title={practiceTitle}
+        onBack={() => {
+          if (document.fullscreenElement) void document.exitFullscreen();
+          setScreen(returnTo === 'result' && summary ? 'result' : 'intro');
+        }}
+      />
+    );
+  }
   if (screen === 'progress') return <Progress path={path} lines={lines} />;
   if (screen === 'result' && summary) {
     return (
@@ -68,8 +102,15 @@ export function App(): React.JSX.Element {
         onGrid={requantise}
         onRerun={(input) => void run(path, input, grid)}
         onNew={() => setScreen('intro')}
+        onPractice={() => void practiseCurrent()}
       />
     );
   }
-  return <Intro error={error} onVideo={(file) => void run(file, {}, DEFAULT_GRID)} />;
+  return (
+    <Intro
+      error={error}
+      onVideo={(file) => void run(file, {}, DEFAULT_GRID)}
+      onScore={(file) => void openScore(file)}
+    />
+  );
 }

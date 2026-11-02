@@ -9,6 +9,10 @@ const bridge: AppBridge = {
   page: (number) => ipcRenderer.invoke('app:page', number),
   save: (kind) => ipcRenderer.invoke('app:save', kind),
   revealInFolder: (path) => ipcRenderer.invoke('app:reveal', path),
+  openScore: (path) => ipcRenderer.invoke('app:open-score', path),
+  practiceCurrent: () => ipcRenderer.invoke('app:practice-current'),
+  practiceLayout: (width, scale) => ipcRenderer.invoke('app:practice-layout', width, scale),
+  microphoneAccess: () => ipcRenderer.invoke('app:microphone-access'),
   filePath: (file) => webUtils.getPathForFile(file),
   onStatus: (listener) => {
     const handler = (_e: unknown, message: string): void => listener(message);

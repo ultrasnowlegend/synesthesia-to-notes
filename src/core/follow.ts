@@ -97,11 +97,11 @@ interface Candidate {
 
 export class ScoreFollower {
   readonly steps: readonly ScoreStep[];
-  private readonly options: Required<Omit<FollowerOptions, 'staves'>>;
-  private readonly staves: Set<number> | null;
+  private options: Required<Omit<FollowerOptions, 'staves'>>;
+  private staves: Set<number> | null;
   private readonly states = new Map<string, NoteState>();
   /** Required notes of each step: the ones on the staves being played. */
-  private readonly required: ScoreNote[][];
+  private required: ScoreNote[][];
   private open: Open[] = [];
   private candidate: Candidate | null = null;
   private position_ = 0;
@@ -117,16 +117,34 @@ export class ScoreFollower {
 
   constructor(steps: readonly ScoreStep[], options: FollowerOptions = {}) {
     this.steps = steps;
+    this.options = ScoreFollower.settle(options);
+    this.staves = options.staves && options.staves.length > 0 ? new Set(options.staves) : null;
+    this.required = steps.map((s) => s.notes.filter((n) => this.plays(n)));
+    this.reset();
+  }
+
+  private static settle(options: FollowerOptions): Required<Omit<FollowerOptions, 'staves'>> {
     const input = options.input ?? 'midi';
-    this.options = {
+    return {
       input,
       lookahead: options.lookahead ?? 3,
       grace: options.grace ?? (input === 'audio' ? 0.4 : 0.25),
       chordFraction: options.chordFraction ?? (input === 'audio' ? 0.6 : 1),
     };
+  }
+
+  /**
+   * Changes the input or the hands mid-way. What lies before the finger keeps
+   * its colours; from the finger on, the score is unplayed under the new rules.
+   */
+  configure(options: FollowerOptions): FollowChange {
+    this.options = ScoreFollower.settle(options);
     this.staves = options.staves && options.staves.length > 0 ? new Set(options.staves) : null;
-    this.required = steps.map((s) => s.notes.filter((n) => this.plays(n)));
-    this.reset();
+    this.required = this.steps.map((s) => s.notes.filter((n) => this.plays(n)));
+    const wrong = this.wrong;
+    const change = this.seek(this.position_);
+    this.wrong = wrong;
+    return change;
   }
 
   /** Index of the step due now; equals the number of steps at the end. */

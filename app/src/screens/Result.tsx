@@ -8,6 +8,7 @@ interface Props {
   onGrid: (next: GridOptions) => void;
   onRerun: (input: TranscribeInput) => void;
   onNew: () => void;
+  onPractice: () => void;
 }
 
 const DIVISIONS = [
@@ -58,7 +59,7 @@ function Slider({
   );
 }
 
-export function Result({ summary, grid, onGrid, onRerun, onNew }: Props): React.JSX.Element {
+export function Result({ summary, grid, onGrid, onRerun, onNew, onPractice }: Props): React.JSX.Element {
   const [page, setPage] = useState(1);
   const [svg, setSvg] = useState('');
   const [message, setMessage] = useState('');
@@ -116,6 +117,9 @@ export function Result({ summary, grid, onGrid, onRerun, onNew }: Props): React.
             </span>
           )}
         </div>
+        <button className="primary" onClick={onPractice} title="Noty přes celé okno, s poslechem a otáčením">
+          Hrát z not
+        </button>
         <button onClick={onNew}>Jiné video</button>
       </div>
 

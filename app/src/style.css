@@ -306,3 +306,250 @@ input[type="range"] {
   color: var(--danger);
   font-size: 0.85rem;
 }
+
+/* Intro: the second way in, for scores that already exist */
+.intro-alt {
+  margin-top: 1.4rem;
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  color: var(--muted);
+}
+.intro-alt .formats {
+  font-size: 0.78rem;
+}
+
+/* Playing from the score */
+.practice {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  background: var(--ground);
+}
+.practice-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.9rem;
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel);
+  flex-wrap: wrap;
+}
+.practice-bar .name {
+  font-weight: 600;
+  max-width: 16rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.practice-bar .spacer {
+  flex: 1;
+}
+.practice-bar button {
+  padding: 0.38rem 0.7rem;
+}
+.practice-bar select.compact {
+  width: auto;
+  padding: 0.36rem 0.45rem;
+}
+.practice-bar .chip b.ok {
+  color: var(--left-hand);
+}
+.practice-bar .chip b.bad {
+  color: var(--danger);
+}
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.segmented button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.segmented button + button {
+  border-left: 1px solid var(--rule);
+}
+.segmented button.on {
+  background: var(--accent);
+  color: #1a1206;
+  font-weight: 600;
+}
+.segmented button.on:hover {
+  color: #1a1206;
+}
+.zoom {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+.meter {
+  width: 4.5rem;
+  height: 0.5rem;
+  border-radius: 100px;
+  background: var(--panel-2);
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+.meter-fill {
+  height: 100%;
+  width: 0;
+  background: var(--left-hand);
+  transition: width 60ms linear;
+}
+.meter-fill.hot {
+  background: var(--danger);
+}
+
+.practice-stage {
+  position: relative;
+  min-height: 0;
+  padding: 0.6rem;
+}
+.practice-score {
+  height: 100%;
+  background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+}
+.practice-score.scrolling {
+  overflow-y: auto;
+  display: block;
+}
+.practice-score .system {
+  position: relative;
+  flex: none;
+  border-left: 4px solid transparent;
+}
+.practice-score .system svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.practice-score .system + .system {
+  border-top: 1px solid #eef0f3;
+}
+.practice-score .system.is-playing {
+  border-left-color: var(--accent);
+  background: #fffaf1;
+}
+.practice-score .system.is-next {
+  border-left-color: #f4d29c;
+}
+.practice-score .slot-empty {
+  flex: 1;
+}
+
+/* The notes themselves: coloured by what the follower made of them. */
+.practice-score g.note.st-current {
+  fill: #c76a00;
+  color: #c76a00;
+}
+.practice-score g.note.st-hit {
+  fill: #12924f;
+  color: #12924f;
+}
+.practice-score g.note.st-missed {
+  fill: #d23b2f;
+  color: #d23b2f;
+}
+.practice-score g.note.st-skipped {
+  fill: #b9c0ca;
+  color: #b9c0ca;
+}
+.step-cursor {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  border-radius: 6px;
+  background: rgba(240, 169, 58, 0.16);
+  border: 1px solid rgba(240, 169, 58, 0.55);
+  pointer-events: none;
+  transition: left 120ms ease-out, width 120ms ease-out;
+}
+
+.practice-overlay {
+  position: absolute;
+  inset: 0.6rem;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  pointer-events: none;
+}
+.practice-overlay.error {
+  color: var(--danger);
+}
+.practice-overlay.done {
+  background: rgba(16, 19, 26, 0.55);
+  border-radius: 6px;
+  pointer-events: auto;
+}
+.done-card {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 1.6rem 2rem;
+  text-align: center;
+  color: var(--ink);
+}
+.done-card h2 {
+  margin: 0 0 0.5rem;
+}
+
+.practice-foot {
+  display: flex;
+  gap: 1.2rem;
+  align-items: center;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.practice-foot .heard {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  flex: 1;
+}
+.practice-foot .hint {
+  font-size: 0.75rem;
+}
+
+.keyboard {
+  height: 3.2rem;
+  padding: 0 0.6rem 0.5rem;
+}
+.keyboard svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.keyboard .key.white {
+  fill: #e9ecf1;
+  stroke: #9aa3b1;
+  stroke-width: 0.4;
+}
+.keyboard .key.black {
+  fill: #1d2129;
+}
+.keyboard .key.due {
+  fill: #f6c46f;
+}
+.keyboard .key.black.due {
+  fill: #c97f12;
+}
+.keyboard .key.flash-ok {
+  fill: #22b36a;
+}
+.keyboard .key.flash-wrong {
+  fill: #e5483b;
+}
+
+.practice.is-fullscreen .practice-foot .hint {
+  display: none;
+}

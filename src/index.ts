@@ -4,3 +4,4 @@ export * from './video/calibration.js';
 export * from './video/sampling.js';
 export * from './audio/audio.js';
 export * from './transcribe.js';
+export * from './engrave.js';

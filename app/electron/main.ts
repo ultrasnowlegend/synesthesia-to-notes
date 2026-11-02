@@ -1,19 +1,21 @@
-import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell, systemPreferences } from 'electron';
 import { randomBytes } from 'node:crypto';
-import { rm, writeFile } from 'node:fs/promises';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { midiToMusicXml } from '../../src/core/import.js';
 import { writeMidi } from '../../src/core/midi.js';
 import { writeMusicXml } from '../../src/core/notation.js';
 import { drawCalibration, drawPianoRoll } from '../../src/core/previews.js';
 import { printableHtml } from '../../src/core/print.js';
+import { layoutForScreen, type Toolkit } from '../../src/engrave.js';
 import { alignToStart, estimateTempo, quantise } from '../../src/core/tempo.js';
 import { estimateKey } from '../../src/core/tonality.js';
 import type { Note, NoteEvent } from '../../src/core/types.js';
 import { transcribeVideo, type TranscribeOptions, type Transcription } from '../../src/transcribe.js';
-import type { GridOptions, Reply, Summary } from './shared.js';
+import type { GridOptions, PracticeLayout, PracticeSource, Reply, Summary } from './shared.js';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 
@@ -66,20 +68,25 @@ function keyName(fifths: number): string {
   return KEY_NAMES[Math.max(0, Math.min(14, fifths + 7))] ?? '';
 }
 
-interface Engraver {
-  loadData: (data: string) => boolean;
+interface Engraver extends Toolkit {
   getPageCount: () => number;
   renderToSVG: (page: number) => string;
-  setOptions: (options: Record<string, unknown>) => void;
+}
+
+let verovioModule: Promise<unknown> | null = null;
+
+/** The WebAssembly module is large; both toolkits share one instance of it. */
+async function newToolkit(): Promise<Engraver> {
+  verovioModule ??= import('verovio/wasm').then(({ default: create }) => create());
+  const { VerovioToolkit } = await import('verovio/esm');
+  return new VerovioToolkit(await verovioModule) as unknown as Engraver;
 }
 
 let engraver: Engraver | null = null;
 
 async function getEngraver(): Promise<Engraver> {
   if (engraver) return engraver;
-  const { default: createVerovioModule } = await import('verovio/wasm');
-  const { VerovioToolkit } = await import('verovio/esm');
-  const toolkit = new VerovioToolkit(await createVerovioModule());
+  const toolkit = await newToolkit();
   toolkit.setOptions({
     pageWidth: 2100,
     pageHeight: 2970,
@@ -89,8 +96,28 @@ async function getEngraver(): Promise<Engraver> {
     header: 'none',
     spacingStaff: 10,
   });
-  engraver = toolkit as unknown as Engraver;
+  engraver = toolkit;
   return engraver;
+}
+
+/**
+ * Playing from the score has a toolkit of its own: its pages are cut to the
+ * window, one line of music each, while the other keeps printing on A4.
+ */
+let practiceToolkit: Engraver | null = null;
+let practice: { title: string; data: string | ArrayBuffer } | null = null;
+/** Whether the practice toolkit already holds the open score. */
+let practiceLoaded = '';
+
+async function getPracticeToolkit(): Promise<Engraver> {
+  practiceToolkit ??= await newToolkit();
+  return practiceToolkit;
+}
+
+function setPractice(title: string, data: string | ArrayBuffer): PracticeSource {
+  practice = { title, data };
+  practiceLoaded = '';
+  return { title };
 }
 
 function toDataUrl(rgb: Uint8Array, width: number, height: number): string {
@@ -251,6 +278,74 @@ ipcMain.handle(
       await savePdf(r.filePath, base);
     }
     return r.filePath;
+  }),
+);
+
+ipcMain.handle(
+  'app:open-score',
+  wrap(async (_e: unknown, given?: string): Promise<PracticeSource | null> => {
+    let path = given ?? null;
+    if (!path) {
+      const r = await dialog.showOpenDialog({
+        title: 'Otevřít noty',
+        properties: ['openFile'],
+        filters: [
+          { name: 'Noty', extensions: ['musicxml', 'xml', 'mxl', 'mei', 'mid', 'midi', 'abc'] },
+        ],
+      });
+      path = r.canceled ? null : (r.filePaths[0] ?? null);
+    }
+    if (!path) return null;
+    const title = basename(path, extname(path));
+    const extension = extname(path).toLowerCase();
+    const bytes = await readFile(path);
+    if (extension === '.mid' || extension === '.midi') {
+      return setPractice(title, midiToMusicXml(new Uint8Array(bytes), title));
+    }
+    if (extension === '.mxl') {
+      return setPractice(title, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+    }
+    return setPractice(title, bytes.toString('utf8'));
+  }),
+);
+
+ipcMain.handle(
+  'app:practice-current',
+  wrap((): PracticeSource => {
+    if (!current) throw new Error('A video has to be transcribed first.');
+    return setPractice(basename(current.path, extname(current.path)), current.musicxml);
+  }),
+);
+
+/**
+ * Engraves the score for a window of the given width: one line of music per
+ * page, and the chain of steps the follower walks along. A new width only
+ * redoes the layout, so the ids of the notes — and their colours — survive.
+ */
+ipcMain.handle(
+  'app:practice-layout',
+  wrap(async (_e: unknown, width: number, scale: number): Promise<PracticeLayout> => {
+    if (!practice) throw new Error('No score is open.');
+    const toolkit = await getPracticeToolkit();
+    const layout = layoutForScreen(
+      toolkit,
+      practice.title,
+      width,
+      scale,
+      practiceLoaded ? null : practice.data,
+    );
+    practiceLoaded = 'loaded';
+    return layout;
+  }),
+);
+
+/** macOS asks once per app; elsewhere the window's own permission prompt is enough. */
+ipcMain.handle(
+  'app:microphone-access',
+  wrap(async (): Promise<boolean> => {
+    if (process.platform !== 'darwin') return true;
+    if (systemPreferences.getMediaAccessStatus('microphone') === 'granted') return true;
+    return systemPreferences.askForMediaAccess('microphone');
   }),
 );
 

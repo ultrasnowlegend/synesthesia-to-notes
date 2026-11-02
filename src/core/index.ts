@@ -19,3 +19,6 @@ export * from './onsets.js';
 export * from './sync.js';
 export * from './listen.js';
 export * from './follow.js';
+export * from './score.js';
+export * from './import.js';
+export * from './turning.js';
